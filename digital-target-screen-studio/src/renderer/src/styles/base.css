@@ -1,0 +1,149 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+/* Digital Target design tokens */
+:root {
+  --dt-primary: #3c096c;
+  --dt-secondary: #5a189a;
+  --dt-accent: #e0aaff;
+  --dt-accent-strong: #c77dff;
+
+  --bg: #0d0717;
+  --bg-elev: #120a20;
+  --surface: #180e2b;
+  --surface-2: #211437;
+  --surface-3: #2b1b47;
+  --border: rgba(224, 170, 255, 0.1);
+  --border-strong: rgba(224, 170, 255, 0.22);
+
+  --text: #f7f2ff;
+  --text-2: #cfc4e0;
+  --text-3: #a497b8;
+
+  --danger: #ff5c7a;
+  --danger-bg: rgba(255, 92, 122, 0.12);
+  --success: #4ade9b;
+  --success-bg: rgba(74, 222, 155, 0.12);
+  --warning: #ffc861;
+  --warning-bg: rgba(255, 200, 97, 0.12);
+  --info: #9cc9ff;
+  --rec: #ff3b5c;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 10px 30px rgba(5, 2, 12, 0.45);
+  --shadow-sm: 0 2px 8px rgba(5, 2, 12, 0.35);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--dt-accent);
+
+  --font: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'Cascadia Mono', 'Consolas', ui-monospace, monospace;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-fast: 120ms;
+  --t: 180ms;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='midnight'] {
+  --bg: #06030c;
+  --bg-elev: #0b0616;
+  --surface: #110a1f;
+  --surface-2: #19102c;
+  --surface-3: #22163a;
+  --border: rgba(224, 170, 255, 0.14);
+  --text-2: #dcd3ea;
+  --text-3: #b3a7c6;
+}
+
+:root[data-motion='reduced'] {
+  --t-fast: 0ms;
+  --t: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 0ms;
+    --t: 0ms;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+  user-select: none;
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--dt-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(224, 170, 255, 0.35);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(224, 170, 255, 0.16);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(224, 170, 255, 0.28);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

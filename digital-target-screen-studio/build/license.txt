@@ -1,0 +1,27 @@
+DIGITAL TARGET SCREEN STUDIO — END USER LICENSE AGREEMENT
+
+Copyright (c) 2026 Digital Target. All rights reserved.
+
+1. Licence. Digital Target grants you a non-exclusive, non-transferable licence
+   to install and use Digital Target Screen Studio ("the Software") on computers
+   you own or control, for personal or commercial purposes.
+
+2. Your content. Recordings, screenshots and audio you create remain yours. The
+   Software stores them only on your computer, in folders you choose. It does
+   not upload content, require an account, or collect telemetry.
+
+3. Restrictions. You may not sell, rent or redistribute the Software (except as
+   permitted by Digital Target) or remove its copyright and licence notices.
+   You are responsible for having the rights and consent needed to record any
+   screen content, audio or people.
+
+4. Third-party components. The Software includes open-source components that are
+   licensed under their own terms (listed in the About page and in
+   resources\licenses\THIRD_PARTY_NOTICES.txt), including FFmpeg under the GNU
+   LGPL v3 or later, which you may replace with a compatible build.
+
+5. No warranty. The Software is provided "as is", without warranty of any kind.
+   To the extent permitted by law, Digital Target is not liable for any damages
+   arising from its use.
+
+[Replace this text with Digital Target's final licence agreement before release.]

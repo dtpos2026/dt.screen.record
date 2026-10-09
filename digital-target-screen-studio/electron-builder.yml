@@ -1,0 +1,63 @@
+appId: com.digitaltarget.screenstudio
+productName: Digital Target Screen Studio
+copyright: Copyright © 2026 Digital Target
+executableName: DigitalTargetScreenStudio
+directories:
+  output: release/${version}
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+asar: true
+# Runtime resources: brand assets, licences and the LGPL FFmpeg build.
+extraResources:
+  - from: resources/brand
+    to: brand
+  - from: resources/licenses
+    to: licenses
+  - from: resources/ffmpeg/win32-x64
+    to: ffmpeg
+    filter:
+      - '**/*'
+electronLanguages:
+  - en-US
+  - en-GB
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: build/icon.ico
+  legalTrademarks: Digital Target
+  # Executable branding is applied by scripts/after-pack.cjs (pure JS, works without Wine).
+  signAndEditExecutable: false
+  requestedExecutionLevel: asInvoker
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Digital Target Screen Studio
+  menuCategory: Digital Target
+  uninstallDisplayName: Digital Target Screen Studio
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  installerSidebar: build/installerSidebar.bmp
+  uninstallerSidebar: build/uninstallerSidebar.bmp
+  license: build/license.txt
+  artifactName: Digital-Target-Screen-Studio-Setup-${version}-x64.${ext}
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+portable:
+  artifactName: Digital-Target-Screen-Studio-${version}-x64-Portable.${ext}
+linux:
+  target: [dir]
+  icon: build/icon.png
+  category: Video
+afterPack: scripts/after-pack.cjs
+publish: null

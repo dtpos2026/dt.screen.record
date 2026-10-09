@@ -1,0 +1,173 @@
+body {
+  background: transparent;
+}
+.tb {
+  position: fixed;
+  left: 6px;
+  right: 6px;
+  top: 6px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 0 4px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(34, 18, 58, 0.97), rgba(18, 10, 32, 0.97));
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.tb-grip {
+  -webkit-app-region: drag;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--dt-secondary), var(--dt-primary));
+  cursor: grab;
+  flex-shrink: 0;
+}
+.tb-grip img {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+.tb-status {
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 150px;
+  flex: 1;
+  height: 100%;
+}
+.tb-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-3);
+  flex-shrink: 0;
+}
+.tb-recording .tb-dot {
+  background: var(--rec);
+  box-shadow: 0 0 0 0 rgba(255, 59, 92, 0.6);
+  animation: pulse 1.6s infinite;
+}
+.tb-paused .tb-dot {
+  background: var(--warning);
+}
+.tb-finalizing .tb-dot,
+.tb-stopping .tb-dot {
+  background: var(--dt-accent);
+}
+.tb-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.tb-recording .tb-label {
+  color: #ff8fa3;
+}
+.tb-time {
+  font-size: 15px;
+  font-weight: 600;
+}
+.tb-limit {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.tb-mic {
+  display: inline-flex;
+  align-items: flex-end;
+  width: 5px;
+  height: 18px;
+  border-radius: 3px;
+  background: rgba(224, 170, 255, 0.15);
+  overflow: hidden;
+}
+.tb-mic span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--success);
+  transform-origin: bottom;
+  transition: transform 90ms linear;
+}
+.tb-mic.clip span {
+  background: var(--danger);
+}
+.tb-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.tb-btn {
+  -webkit-app-region: no-drag;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 8px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.tb-btn:hover:not(:disabled) {
+  background: rgba(224, 170, 255, 0.12);
+  color: var(--text);
+}
+.tb-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.tb-rec {
+  background: rgba(255, 59, 92, 0.12);
+}
+.tb-rec-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--rec);
+  box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.25);
+}
+.tb-stop {
+  background: var(--rec);
+  color: #fff;
+}
+.tb-stop:hover:not(:disabled) {
+  background: #ff5571;
+}
+.tb-split {
+  display: flex;
+}
+.tb-caret {
+  min-width: 18px;
+  padding: 0 2px;
+}
+.tb-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 3px;
+  background: var(--border-strong);
+}
+.tb-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--dt-accent), var(--rec));
+  transform-origin: left;
+  transition: transform 250ms linear, opacity var(--t) var(--ease);
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 59, 92, 0.55); }
+  70% { box-shadow: 0 0 0 7px rgba(255, 59, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 59, 92, 0); }
+}

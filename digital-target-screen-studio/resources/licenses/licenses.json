@@ -1,0 +1,68 @@
+[
+  {
+    "name": "Electron",
+    "version": "44.7.0",
+    "license": "MIT",
+    "url": "https://github.com/electron/electron"
+  },
+  {
+    "name": "Chromium",
+    "version": "",
+    "license": "BSD-3-Clause and others (see LICENSES.chromium.html)",
+    "url": "https://www.chromium.org"
+  },
+  {
+    "name": "Node.js",
+    "version": "",
+    "license": "MIT",
+    "url": "https://nodejs.org"
+  },
+  {
+    "name": "FFmpeg",
+    "version": "8.1 (LGPL shared build, ffmpeg-n8.1-latest-win64-lgpl-shared-8.1)",
+    "license": "LGPL-3.0-or-later",
+    "url": "https://ffmpeg.org"
+  },
+  {
+    "name": "Inter typeface",
+    "version": "5.3.0",
+    "license": "OFL-1.1",
+    "url": "https://rsms.me/inter/"
+  },
+  {
+    "name": "Poppins typeface (logo outlines)",
+    "version": "5.3.0",
+    "license": "OFL-1.1",
+    "url": "https://fonts.google.com/specimen/Poppins"
+  },
+  {
+    "name": "lucide-react",
+    "version": "1.54.0",
+    "license": "ISC",
+    "url": "https://github.com/lucide-icons/lucide"
+  },
+  {
+    "name": "react",
+    "version": "19.3.0",
+    "license": "MIT",
+    "url": "https://github.com/react/react"
+  },
+  {
+    "name": "react-dom",
+    "version": "19.3.0",
+    "license": "MIT",
+    "url": "https://github.com/react/react"
+  },
+  {
+    "name": "scheduler",
+    "version": "0.28.0",
+    "license": "MIT",
+    "url": "https://github.com/react/react"
+  },
+  {
+    "name": "zod",
+    "version": "4.6.5",
+    "license": "MIT",
+    "url": "https://github.com/colinhacks/zod"
+  }
+]

@@ -1,0 +1,66 @@
+body {
+  background: transparent;
+}
+.cam {
+  position: fixed;
+  inset: 4px;
+  overflow: hidden;
+  background: #120a20;
+  border: 3px solid var(--dt-accent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  -webkit-app-region: drag;
+}
+.cam-circle {
+  border-radius: 50%;
+}
+.cam-rounded {
+  border-radius: 22px;
+}
+.cam video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cam video.mirror {
+  transform: scaleX(-1);
+}
+.cam-error {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.cam-tools {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(13, 7, 23, 0.82);
+  opacity: 0;
+  transition: opacity var(--t) var(--ease);
+  -webkit-app-region: no-drag;
+}
+.cam:hover .cam-tools {
+  opacity: 1;
+}
+.cam-tools button {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+}
+.cam-tools button:hover {
+  background: rgba(224, 170, 255, 0.18);
+}
