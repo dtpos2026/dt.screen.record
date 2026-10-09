@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowUpRight, Check, Circle, Copy, Crop, Download, Grid3x3, Highlighter, ImageDown, Maximize2, Minus, MousePointer2, Redo2, Save, Square, Trash2, Type, Undo2, Droplets, X, ZoomIn, ZoomOut, ArrowLeft
 } from 'lucide-react'
@@ -88,10 +88,13 @@ export function Editor() {
   }, [captureId, sourcePath])
 
   const hasDoc = doc != null
-  useEffect(() => {
+  // Measure before the first paint so the image does not jump when the editor opens.
+  useLayoutEffect(() => {
     const el = stage.current
     if (!el) return
-    const ro = new ResizeObserver(() => setStageSize({ w: el.clientWidth - 40, h: el.clientHeight - 40 }))
+    const measure = () => setStageSize({ w: el.clientWidth - 40, h: el.clientHeight - 40 })
+    measure()
+    const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
   }, [hasDoc])

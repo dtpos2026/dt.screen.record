@@ -202,6 +202,14 @@ test('screenshot editor: annotate, crop and save a copy', async () => {
   await page.getByRole('button', { name: 'Edit', exact: true }).click()
   const canvas = page.locator('.editor-stage canvas')
   await expect(canvas).toBeVisible()
+  // Wait until the layout is stable before using screen coordinates.
+  let last = ''
+  await expect.poll(async () => {
+    const now = JSON.stringify(await canvas.boundingBox())
+    const stable = now === last
+    last = now
+    return stable
+  }).toBe(true)
   const b = (await canvas.boundingBox())!
   // Rectangle
   await page.keyboard.press('r')

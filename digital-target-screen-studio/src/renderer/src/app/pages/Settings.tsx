@@ -262,7 +262,7 @@ function ToolbarSettings() {
       <Toggle checked={t.alwaysVisible} onChange={(v) => void update({ toolbar: { alwaysVisible: v } })} label="Always show the toolbar" description="Keep it on screen for quick recordings and screenshots." />
       <div className="row" style={{ marginTop: 8 }}>
         <Button variant="secondary" size="sm" onClick={() => void dt.invoke('toolbar:toggle', { visible: true })}>Show now</Button>
-        <Button variant="ghost" size="sm" onClick={() => void update({ toolbar: { x: null, y: null } }).then(() => dt.invoke('toolbar:toggle', { visible: false })).then(() => dt.invoke('toolbar:toggle', { visible: true }))}>Reset position</Button>
+        <Button variant="ghost" size="sm" onClick={() => void update({ toolbar: { x: null, y: null } })}>Reset position</Button>
       </div>
       <p className="small muted" style={{ marginBottom: 0 }}>Shortcut: {formatAccelerator(settings.shortcuts.toggleToolbar)}. The toolbar remembers where you leave it.</p>
     </Card>

@@ -315,14 +315,12 @@ export function createWebcamWindow(cfg: { size: number; x: number | null; y: num
       ...size,
       x: p.x,
       y: p.y,
-      minWidth: 120,
-      minHeight: 120,
-      maxWidth: 640,
-      maxHeight: 640,
       frame: false,
       transparent: true,
       backgroundColor: '#00000000',
-      resizable: true,
+      // Transparent windows cannot be resized by dragging on Windows; size is
+      // changed with the bubble's own buttons or in Settings.
+      resizable: false,
       maximizable: false,
       fullscreenable: false,
       skipTaskbar: true,
@@ -332,7 +330,6 @@ export function createWebcamWindow(cfg: { size: number; x: number | null; y: num
       title: 'Webcam'
     })
   )
-  win.setAspectRatio(1)
   win.setAlwaysOnTop(true, 'screen-saver')
   guard(win, 'webcam')
   let t: NodeJS.Timeout | null = null

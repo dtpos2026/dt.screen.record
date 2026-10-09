@@ -1,7 +1,7 @@
 import { Menu } from 'electron'
 import type { RecordingState } from '../../shared/types'
 import { settingsStore } from '../settings-store'
-import { createToolbarWindow, createWebcamWindow, getToolbarWindow, getWebcamWindow, showMainWindow, TOOLBAR_SIZE } from '../windows'
+import { createToolbarWindow, createWebcamWindow, getToolbarWindow, getWebcamWindow, showMainWindow, TOOLBAR_SIZE, visiblePosition } from '../windows'
 import { sendTo } from './events'
 import { getMainWindow } from '../windows'
 import type { ScreenshotMode } from '../../shared/settings'
@@ -16,6 +16,11 @@ export function syncToolbar(status: RecordingState['status'] = lastStatus): void
   const recording = status !== 'idle'
   const wanted = !manualHidden && (t.alwaysVisible || (recording && t.showWhileRecording))
   const win = getToolbarWindow()
+  if (win && t.x === null && t.y === null) {
+    // "Reset position" in Settings: move back to the default spot.
+    const p = visiblePosition(null, null, TOOLBAR_SIZE)
+    win.setPosition(p.x, p.y)
+  }
   if (wanted) {
     const w =
       win ??
