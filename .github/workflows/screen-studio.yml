@@ -1,0 +1,123 @@
+name: Digital Target Screen Studio
+
+on:
+  push:
+    paths:
+      - 'digital-target-screen-studio/**'
+      - '.github/workflows/screen-studio.yml'
+  pull_request:
+    paths:
+      - 'digital-target-screen-studio/**'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: digital-target-screen-studio
+
+concurrency:
+  group: screen-studio-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows — build, test, package
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: digital-target-screen-studio/package-lock.json
+      - run: npm ci
+      - name: Typecheck, lint, unit tests
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+      - name: Build app
+        run: npm run build
+      - name: Fetch FFmpeg (LGPL) and collect licences
+        run: |
+          npm run ffmpeg:fetch
+          npm run licenses
+      - name: FFmpeg encoder check
+        shell: pwsh
+        run: |
+          .\resources\ffmpeg\win32-x64\ffmpeg.exe -hide_banner -version | Select-Object -First 1
+          .\resources\ffmpeg\win32-x64\ffmpeg.exe -hide_banner -encoders | Select-String 'h264|aac'
+      - name: End-to-end tests on the Windows desktop
+        run: npx playwright test
+        env:
+          DT_E2E_ARTIFACTS: ${{ runner.temp }}
+      - name: Package installer and portable app
+        run: npx electron-builder --win --x64 --publish never
+      - name: Installer smoke test (silent install, launch, uninstall)
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem release\*\Digital-Target-Screen-Studio-Setup-*.exe | Select-Object -First 1
+          Start-Process $setup.FullName -ArgumentList '/S' -Wait
+          $dir = Join-Path $env:LOCALAPPDATA 'Programs\Digital Target Screen Studio'
+          $exe = Join-Path $dir 'DigitalTargetScreenStudio.exe'
+          if (-not (Test-Path $exe)) { throw "Not installed: $exe" }
+          (Get-Item $exe).VersionInfo | Format-List CompanyName, ProductName, FileVersion, LegalCopyright
+          if (-not (Test-Path (Join-Path $dir 'resources\ffmpeg\ffmpeg.exe'))) { throw 'FFmpeg missing from install' }
+          $env:DT_USER_DATA = Join-Path $env:RUNNER_TEMP 'dt-smoke'
+          $p = Start-Process $exe -PassThru
+          Start-Sleep -Seconds 25
+          $log = Join-Path $env:DT_USER_DATA 'logs\app.log'
+          Get-Content $log
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          Get-Process DigitalTargetScreenStudio -ErrorAction SilentlyContinue | Stop-Process -Force
+          if (-not (Select-String -Path $log -Pattern 'FFmpeg .* ready')) { throw 'Bundled FFmpeg was not detected by the installed app' }
+          if (Select-String -Path $log -Pattern '\[ERROR\]') { throw 'Errors in app log' }
+          Start-Sleep -Seconds 2
+          Start-Process (Join-Path $dir 'Uninstall Digital Target Screen Studio.exe') -ArgumentList '/S' -Wait
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-installer
+          path: |
+            digital-target-screen-studio/release/*/Digital-Target-Screen-Studio-Setup-*.exe
+            digital-target-screen-studio/release/*/Digital-Target-Screen-Studio-*-Portable.exe
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: windows-test-report
+          path: |
+            digital-target-screen-studio/playwright-report
+            digital-target-screen-studio/test-results
+
+  linux:
+    name: Linux — unit and end-to-end tests (virtual multi-monitor desktop)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: digital-target-screen-studio/package-lock.json
+      - name: System packages for the virtual desktop
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xserver-xorg-core xserver-xorg-video-dummy x11-xserver-utils x11-apps openbox xdotool pulseaudio pulseaudio-utils ffmpeg
+      - run: npm ci
+      - run: npm run typecheck && npm run lint && npm test
+      - run: npm run build
+      - name: End-to-end tests
+        run: |
+          sudo Xorg :62 -noreset -nolisten tcp -ac -config "$PWD/tests/e2e/xorg-dummy.conf" -logfile /tmp/xorg.log &
+          sleep 3
+          source scripts/e2e-linux-env.sh
+          npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: linux-test-report
+          path: |
+            digital-target-screen-studio/playwright-report
+            digital-target-screen-studio/test-results

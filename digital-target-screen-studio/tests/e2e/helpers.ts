@@ -144,6 +144,7 @@ export function imageInfo(file: string): { type: string; width: number; height: 
 }
 
 export function filesIn(dir: string, re: RegExp): string[] {
+  if (!existsSync(dir)) return []
   return readdirSync(dir).filter((f) => re.test(f)).map((f) => join(dir, f))
 }
 

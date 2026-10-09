@@ -9,7 +9,7 @@ set -e
 DISPLAY_NUM=${DT_E2E_DISPLAY:-:62}
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if ! DISPLAY=$DISPLAY_NUM xrandr >/dev/null 2>&1; then
-  Xorg "$DISPLAY_NUM" -noreset -nolisten tcp -config "$HERE/tests/e2e/xorg-dummy.conf" -logfile /tmp/dt-e2e-xorg.log >/dev/null 2>&1 &
+  Xorg "$DISPLAY_NUM" -noreset -nolisten tcp -ac -config "$HERE/tests/e2e/xorg-dummy.conf" -logfile /tmp/dt-e2e-xorg.log >/dev/null 2>&1 &
   for _ in $(seq 1 30); do DISPLAY=$DISPLAY_NUM xrandr >/dev/null 2>&1 && break; sleep 0.2; done
 fi
 export DISPLAY=$DISPLAY_NUM

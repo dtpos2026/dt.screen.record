@@ -16,14 +16,15 @@ extraResources:
     to: brand
   - from: resources/licenses
     to: licenses
-  - from: resources/ffmpeg/win32-x64
-    to: ffmpeg
-    filter:
-      - '**/*'
 electronLanguages:
   - en-US
   - en-GB
 win:
+  extraResources:
+    - from: resources/ffmpeg/win32-x64
+      to: ffmpeg
+      filter:
+        - '**/*'
   target:
     - target: nsis
       arch: [x64]
@@ -60,4 +61,13 @@ linux:
   icon: build/icon.png
   category: Video
 afterPack: scripts/after-pack.cjs
+# Security hardening of the shipped Electron binary.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
 publish: null
