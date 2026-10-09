@@ -22,7 +22,7 @@ import { getScreenSources } from './services/displays'
 // ------------------------------------------------------------------ early setup
 
 if (process.env.DT_USER_DATA) app.setPath('userData', process.env.DT_USER_DATA)
-if (process.env.DT_E2E === '1') {
+if (process.env.DT_E2E === '1' && process.env.DT_E2E_REAL_AUDIO !== '1') {
   // Automated tests only: use Chromium's fake camera/microphone.
   app.commandLine.appendSwitch('use-fake-device-for-media-stream')
   app.commandLine.appendSwitch('use-fake-ui-for-media-stream')

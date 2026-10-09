@@ -187,8 +187,11 @@ export function Editor() {
     setTool('select')
   }, [crop, flatten, commit, W, H])
 
+  // Enter and the following blur both try to commit; only the first one counts.
+  const committedText = useRef<object | null>(null)
   const commitText = useCallback(() => {
-    if (!text || !doc) return
+    if (!text || !doc || committedText.current === text) return
+    committedText.current = text
     const value = text.value.replace(/\s+$/, '')
     const anns = [...doc.anns]
     if (text.index != null) {
@@ -430,6 +433,8 @@ export function Editor() {
             height={H}
             style={{ width: W * scale, height: H * scale, cursor: tool === 'select' ? 'default' : tool === 'text' ? 'text' : 'crosshair' }}
             onPointerDown={onDown}
+            // Keep focus in the text box that a text-tool click creates.
+            onMouseDown={(e) => e.preventDefault()}
             onPointerMove={onMove}
             onPointerUp={onUp}
           />

@@ -208,6 +208,7 @@ export function Screenshot() {
         <Card title="After capture">
           <Toggle checked={s.showPreview} onChange={(v) => setS({ showPreview: v })} label="Preview before saving" description="Otherwise screenshots are saved automatically." />
           <Toggle checked={s.copyToClipboard} onChange={(v) => setS({ copyToClipboard: v })} label="Copy to clipboard" description="Paste straight into chats, documents and email." />
+          <div style={{ height: 8 }} />
           <Field label="Toolbar & tray default">
             <Select
               value={s.defaultMode}

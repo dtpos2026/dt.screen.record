@@ -233,7 +233,7 @@ export function Recorder() {
           </div>
         </Card>
         {ffmpeg && !ffmpeg.available && r.outputFormat === 'mp4' && <Notice tone="warning" title="MP4 unavailable">FFmpeg was not found, so recordings will be saved as WebM.</Notice>}
-        {info && !info.capabilities.excludeFromCapture && (
+        {info?.platform === 'win32' && !info.capabilities.excludeFromCapture && (
           <Notice tone="info">The floating toolbar may appear in recordings on this Windows version (hiding requires Windows 10 version 2004 or later).</Notice>
         )}
       </div>
