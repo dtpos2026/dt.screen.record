@@ -61,10 +61,13 @@ jobs:
         shell: pwsh
         run: |
           $setup = Get-ChildItem release\*\Digital-Target-Screen-Studio-Setup-*.exe | Select-Object -First 1
-          Start-Process $setup.FullName -ArgumentList '/S' -Wait
-          $dir = Join-Path $env:LOCALAPPDATA 'Programs\Digital Target Screen Studio'
-          $exe = Join-Path $dir 'DigitalTargetScreenStudio.exe'
-          if (-not (Test-Path $exe)) { throw "Not installed: $exe" }
+          Start-Process $setup.FullName -ArgumentList '/S', '/currentuser' -Wait
+          $found = Get-ChildItem -Path "$env:LOCALAPPDATA\Programs", "$env:ProgramFiles" -Filter DigitalTargetScreenStudio.exe -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $found) { throw 'DigitalTargetScreenStudio.exe was not installed' }
+          $exe = $found.FullName
+          $dir = $found.DirectoryName
+          Write-Host "Installed to $dir"
+          Get-ChildItem $dir | Select-Object Name, Length | Format-Table -AutoSize
           (Get-Item $exe).VersionInfo | Format-List CompanyName, ProductName, FileVersion, LegalCopyright
           if (-not (Test-Path (Join-Path $dir 'resources\ffmpeg\ffmpeg.exe'))) { throw 'FFmpeg missing from install' }
           $env:DT_USER_DATA = Join-Path $env:RUNNER_TEMP 'dt-smoke'
