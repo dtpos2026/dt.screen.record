@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { spawn, execFileSync } from 'node:child_process'
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import {
   filesIn,
@@ -260,12 +260,13 @@ test('multi-monitor: per-display and combined captures', async () => {
 test('system audio is captured from the playback device', async () => {
   test.skip(!isLinux || !hasCommand('pactl'), 'covered by the real-audio run on Linux')
   // Separate launch without Chromium's fake devices so real PulseAudio loopback is used.
+  execFileSync('pactl', ['set-source-volume', 'dtsink.monitor', '100%'])
   const R = await launch({ env: { DT_E2E_REAL_AUDIO: '1' }, settings: { audio: { systemAudio: true, microphone: false } } })
   try {
     const r = await R.page.evaluate(() => window.dt.invoke('recording:start'))
     expect(r.ok).toBe(true)
     await waitForStatus(R.page, 'recording')
-    const tone = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-re', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3:sample_rate=48000', '-f', 'pulse', 'dtsink'])
+    const tone = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-re', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3:sample_rate=48000', '-f', 'pulse', '-device', 'dtsink', 'dt-e2e-tone'])
     await new Promise((res) => tone.on('close', res))
     await R.page.evaluate(() => window.dt.invoke('recording:stop'))
     const s = await waitForStatus(R.page, 'idle', 60_000)
@@ -273,6 +274,8 @@ test('system audio is captured from the playback device', async () => {
     expect(p.audio?.codec).toBe('aac')
     const vol = volumeDetect(s.lastSavedPath!)
     expect(vol.max).toBeGreaterThan(-20)
+    // Capturing must not have changed the playback device's capture volume.
+    expect(execFileSync('pactl', ['get-source-volume', 'dtsink.monitor']).toString()).toContain('100%')
   } finally {
     await R.app.close()
   }
@@ -374,6 +377,68 @@ test('interrupted recording is recovered after a crash', async () => {
   } finally {
     await B.app.close()
   }
+})
+
+test('countdown runs before recording and can be cancelled', async () => {
+  await setSettings(page, { recording: { countdownSeconds: 3 } })
+  const pending = page.evaluate(() => window.dt.invoke('recording:start'))
+  await waitForStatus(page, 'countdown', 10_000)
+  const cd = await waitFor(() => L.app.windows().find((w) => w.url().includes('countdown.html')), 10_000, 'countdown window')
+  await expect(cd.locator('.cd-num')).toBeVisible()
+  await page.evaluate(() => window.dt.invoke('recording:cancelCountdown'))
+  const r = await pending
+  expect(r.ok).toBe(true)
+  expect((await state(page)).status).toBe('idle')
+
+  await setSettings(page, { recording: { countdownSeconds: 2 } })
+  const t0 = Date.now()
+  const started = page.evaluate(() => window.dt.invoke('recording:start'))
+  await waitForStatus(page, 'recording', 15_000)
+  expect(Date.now() - t0).toBeGreaterThan(1800)
+  await started
+  await page.waitForTimeout(800)
+  await page.evaluate(() => window.dt.invoke('recording:stop'))
+  await waitForStatus(page, 'idle', 60_000)
+  await setSettings(page, { recording: { countdownSeconds: 0 } })
+})
+
+test('discarding a recording asks for confirmation and keeps no file', async () => {
+  const before = filesIn(L.outDir, /\.(mp4|webm|mkv)$/).length
+  const r = await page.evaluate(() => window.dt.invoke('recording:start'))
+  expect(r.ok).toBe(true)
+  await waitForStatus(page, 'recording')
+  await page.waitForTimeout(1500)
+  const discarded = await page.evaluate(() => window.dt.invoke('recording:discard'))
+  expect(discarded).toBe(true)
+  await waitForStatus(page, 'idle')
+  expect(filesIn(L.outDir, /\.(mp4|webm|mkv)$/).length).toBe(before)
+  expect(filesIn(join(L.outDir, '.dt-in-progress'), /\.webm$/)).toEqual([])
+})
+
+test('screenshot delay waits before capturing', async () => {
+  const t0 = Date.now()
+  const r = await page.evaluate(() => window.dt.invoke('screenshot:capture', { mode: 'fullscreen', delaySeconds: 2 }))
+  expect(r.ok).toBe(true)
+  expect(Date.now() - t0).toBeGreaterThan(1900)
+})
+
+test('clear errors for an unusable save folder and a missing microphone', async () => {
+  const blocker = join(L.outDir, 'not-a-folder.txt')
+  writeFileSync(blocker, 'x')
+  await setSettings(page, { general: { recordingsDir: join(blocker, 'sub') } })
+  const r = await page.evaluate(() => window.dt.invoke('recording:start'))
+  expect(r.ok).toBe(false)
+  if (!r.ok) expect(r.error.code).toBe('INVALID_SAVE_LOCATION')
+  await setSettings(page, { general: { recordingsDir: L.outDir }, audio: { microphone: true, micDeviceId: 'device-that-does-not-exist' } })
+  const ok = await page.evaluate(() => window.dt.invoke('recording:start'))
+  expect(ok.ok).toBe(true)
+  const s = await waitForStatus(page, 'recording')
+  expect(s.warnings.join(' ')).toContain('default microphone')
+  await page.waitForTimeout(800)
+  await page.evaluate(() => window.dt.invoke('recording:stop'))
+  const done = await waitForStatus(page, 'idle', 60_000)
+  expect(probe(done.lastSavedPath!).audio?.codec).toBe('aac')
+  await setSettings(page, { audio: { microphone: false, micDeviceId: 'default' } })
 })
 
 test('settings persist across restarts', async () => {

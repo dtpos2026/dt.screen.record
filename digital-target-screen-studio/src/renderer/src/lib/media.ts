@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DisplayInfo, MediaItem } from '@shared/types'
-import { buildVoiceChain, openMicrophone, readLevel, type MicOptions } from './audio-chain'
+import { buildVoiceChain, openMicrophone, RAW_AUDIO, readLevel, type MicOptions } from './audio-chain'
 import type { AudioLevel } from '@shared/types'
 import { dt } from './hooks'
 
@@ -179,7 +179,7 @@ export function useSystemAudioPreview(active: boolean): { level: AudioLevel | nu
     let cleanup: (() => void) | null = null
     void (async () => {
       try {
-        const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+        const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: RAW_AUDIO })
         s.getVideoTracks().forEach((t) => t.stop())
         if (!s.getAudioTracks().length) throw new Error('none')
         if (cancelled) {

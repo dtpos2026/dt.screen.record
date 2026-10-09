@@ -1,5 +1,18 @@
 import type { AudioLevel } from '@shared/types'
 
+/**
+ * System audio must be captured exactly as it plays: voice processing (and in
+ * particular automatic gain control, which changes the capture device's
+ * volume) would alter or silence it.
+ */
+export const RAW_AUDIO: MediaTrackConstraints = {
+  echoCancellation: false,
+  noiseSuppression: false,
+  autoGainControl: false,
+  channelCount: { ideal: 2 },
+  sampleRate: { ideal: 48000 }
+}
+
 export interface MicOptions {
   deviceId: string
   channels: 1 | 2

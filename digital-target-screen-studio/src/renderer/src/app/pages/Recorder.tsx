@@ -423,7 +423,7 @@ export function AudioCard() {
               <div>
                 <Toggle checked={a.noiseSuppression} onChange={(v) => setA({ noiseSuppression: v })} label="Noise suppression" description="Reduces steady background noise such as fans and hum." />
                 <Toggle checked={a.echoCancellation} onChange={(v) => setA({ echoCancellation: v })} label="Echo cancellation" description="Use when recording speakers and a microphone together (headphones are best)." />
-                <Toggle checked={a.autoGainControl} onChange={(v) => setA({ autoGainControl: v })} label="Automatic gain control" description="Keeps your level steady; turn off for the most natural sound." />
+                <Toggle checked={a.autoGainControl} onChange={(v) => setA({ autoGainControl: v })} label="Automatic gain control" description="Keeps your level steady but may change the microphone volume in Windows; off gives the most natural sound." />
                 <Toggle checked={a.voiceEnhancement} onChange={(v) => setA({ voiceEnhancement: v })} label="Voice enhancement" description="Gentle rumble filter, light compression and a safety limiter that prevents clipping." />
                 <Toggle checked={a.micChannels === 2} onChange={(v) => setA({ micChannels: v ? 2 : 1 })} label="Stereo microphone" description="Only for stereo microphones. Mono is best for voice." />
               </div>

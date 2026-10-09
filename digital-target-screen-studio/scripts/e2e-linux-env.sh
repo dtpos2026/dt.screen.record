@@ -24,5 +24,7 @@ if ! pactl info >/dev/null 2>&1; then
 fi
 pactl list short sinks | grep -q dtsink || pactl load-module module-null-sink sink_name=dtsink sink_properties=device.description=DT_Speakers >/dev/null
 pactl set-default-sink dtsink
+pactl set-source-volume dtsink.monitor 100%
+pactl set-sink-volume dtsink 100%
 export DT_E2E_MULTI_MONITOR=1
 echo "E2E desktop ready on $DISPLAY (2 monitors, openbox, PulseAudio null sink)"

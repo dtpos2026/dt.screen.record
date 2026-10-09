@@ -1,7 +1,7 @@
 import { INTERMEDIATE_AUDIO_BITRATE, RECORDING_TIMESLICE_MS } from '@shared/constants'
 import { appError, mediaErrorCode } from '@shared/errors'
 import type { AppErrorInfo, AudioLevels, EngineStartResult, RecordingPlan } from '@shared/types'
-import { buildVoiceChain, openMicrophone, readLevel, type VoiceChain } from '../lib/audio-chain'
+import { buildVoiceChain, openMicrophone, RAW_AUDIO, readLevel, type VoiceChain } from '../lib/audio-chain'
 import { compositePipeline, cropPipeline, firstFrameSize, NATIVE_MAX, openDesktopVideo, windowPipeline, type VideoPipeline } from './video'
 
 class EngineError extends Error {
@@ -29,7 +29,7 @@ export function pickMimeType(pref: RecordingPlan['codecPreference'], withAudio: 
 /** Captures Windows system audio (WASAPI loopback) via getDisplayMedia, with a legacy fallback. */
 async function openSystemAudio(): Promise<MediaStream> {
   try {
-    const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+    const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: RAW_AUDIO })
     s.getVideoTracks().forEach((t) => {
       t.stop()
       s.removeTrack(t)
@@ -39,7 +39,7 @@ async function openSystemAudio(): Promise<MediaStream> {
     // fall through to the legacy path
   }
   const legacy = await navigator.mediaDevices.getUserMedia({
-    audio: { mandatory: { chromeMediaSource: 'desktop' } },
+    audio: { mandatory: { chromeMediaSource: 'desktop', echoCancellation: false, googEchoCancellation: false, googAutoGainControl: false, googNoiseSuppression: false } },
     video: { mandatory: { chromeMediaSource: 'desktop', maxWidth: 64, maxHeight: 64, maxFrameRate: 1 } }
   } as unknown as MediaStreamConstraints)
   legacy.getVideoTracks().forEach((t) => {
@@ -48,6 +48,22 @@ async function openSystemAudio(): Promise<MediaStream> {
   })
   if (!legacy.getAudioTracks().length) throw new Error('No loopback track')
   return legacy
+}
+
+/** Resolves true once a track delivers its first frame / audio buffer. */
+async function waitForTrackData(track: MediaStreamTrack, timeoutMs: number): Promise<boolean> {
+  const clone = track.clone()
+  try {
+    const reader = new MediaStreamTrackProcessor<AudioData | VideoFrame>({ track: clone }).readable.getReader()
+    const r = await Promise.race([reader.read(), new Promise<null>((res) => setTimeout(() => res(null), timeoutMs))])
+    r?.value?.close()
+    reader.cancel().catch(() => undefined)
+    return !!r?.value
+  } catch {
+    return true
+  } finally {
+    clone.stop()
+  }
 }
 
 export interface SessionCallbacks {
@@ -79,6 +95,11 @@ export class RecordingSession {
       if (!size) throw new EngineError(appError('NO_SOURCE', 'The capture source did not produce any frames.', 'Make sure the screen is on and the window is not minimised.'))
 
       const audioTrack = await this.openAudio(warnings)
+      // The WebM muxer holds all data until the first audio frame arrives, so
+      // make sure the audio graph is producing before recording starts.
+      if (audioTrack && !(await waitForTrackData(audioTrack, 3000))) {
+        warnings.push('Audio took longer than usual to start; the first moment of the recording may be silent.')
+      }
       const tracks = [videoTrack, ...(audioTrack ? [audioTrack] : [])]
       const mimeType = pickMimeType(this.plan.codecPreference, !!audioTrack)
       const stream = new MediaStream(tracks)
