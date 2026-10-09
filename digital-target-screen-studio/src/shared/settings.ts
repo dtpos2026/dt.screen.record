@@ -6,6 +6,23 @@ import { z } from 'zod'
  * starting: invalid values silently fall back to their defaults.
  */
 
+export const THEMES = ['system', 'light', 'dark', 'midnight'] as const
+export type ThemeSetting = (typeof THEMES)[number]
+export type EffectiveTheme = Exclude<ThemeSetting, 'system'>
+
+/** Resolves 'system' to light/dark using the OS preference. */
+export function resolveTheme(theme: ThemeSetting, systemPrefersDark: boolean): EffectiveTheme {
+  if (theme === 'system') return systemPrefersDark ? 'dark' : 'light'
+  return theme
+}
+
+/** Window colours per theme (title-bar overlay, first-paint background). */
+export const THEME_CHROME: Record<EffectiveTheme, { background: string; symbol: string }> = {
+  dark: { background: '#0d0717', symbol: '#E0AAFF' },
+  midnight: { background: '#06030c', symbol: '#E0AAFF' },
+  light: { background: '#f6f3fb', symbol: '#3C096C' }
+}
+
 export const RESOLUTION_PRESETS = ['native', '2160', '1440', '1080', '720'] as const
 export type ResolutionPreset = (typeof RESOLUTION_PRESETS)[number]
 
@@ -67,7 +84,7 @@ const generalSchema = z.object({
   notifications: z.boolean().catch(true),
   showSplash: z.boolean().catch(true),
   hideWindowWhileCapturing: z.boolean().catch(true),
-  theme: z.enum(['dark', 'midnight']).catch('dark'),
+  theme: z.enum(THEMES).catch('dark'),
   reduceMotion: z.boolean().catch(false),
   onboardingDone: z.boolean().catch(false)
 })

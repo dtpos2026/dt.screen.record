@@ -1,10 +1,10 @@
-import { Menu } from 'electron'
+import { Menu, nativeTheme } from 'electron'
 import type { RecordingState } from '../../shared/types'
 import { settingsStore } from '../settings-store'
 import { createToolbarWindow, createWebcamWindow, getToolbarWindow, getWebcamWindow, showMainWindow, TOOLBAR_SIZE, visiblePosition } from '../windows'
 import { sendTo } from './events'
 import { getMainWindow } from '../windows'
-import type { ScreenshotMode } from '../../shared/settings'
+import { resolveTheme, type ScreenshotMode } from '../../shared/settings'
 
 let manualHidden = false
 let lastStatus: RecordingState['status'] = 'idle'
@@ -24,7 +24,7 @@ export function syncToolbar(status: RecordingState['status'] = lastStatus): void
   if (wanted) {
     const w =
       win ??
-      createToolbarWindow({ x: t.x, y: t.y }, (x, y) => {
+      createToolbarWindow({ x: t.x, y: t.y }, resolveTheme(settingsStore.get().general.theme, nativeTheme.shouldUseDarkColors), (x, y) => {
         settingsStore.updateQuiet({ toolbar: { x, y } })
       })
     if (!w.isVisible()) {
@@ -60,13 +60,34 @@ export function resizeToolbar(width: number, height: number): void {
   win.setBounds({ x, y, width: w, height: h })
 }
 
-export function popupScreenshotMenu(take: (mode: ScreenshotMode) => void): void {
+const DELAY_CHOICES = [0, 3, 5, 10]
+
+/** The toolbar's screenshot menu: every capture mode, the countdown, and shortcuts to the tool and folder. */
+export function popupScreenshotMenu(actions: { take: (mode: ScreenshotMode) => void; openFolder: () => void }): void {
   const win = getToolbarWindow()
+  const delay = settingsStore.get().screenshot.delaySeconds
+  const delays = DELAY_CHOICES.includes(delay) ? DELAY_CHOICES : [...DELAY_CHOICES, delay].sort((a, b) => a - b)
   const menu = Menu.buildFromTemplate([
-    { label: 'Region…', click: () => take('region') },
-    { label: 'Full screen', click: () => take('fullscreen') },
-    { label: 'Active window', click: () => take('window') },
-    { label: 'All displays', click: () => take('all-displays') },
+    { label: 'Region…', click: () => actions.take('region') },
+    { label: 'Full screen', click: () => actions.take('fullscreen') },
+    { label: 'Active window', click: () => actions.take('window') },
+    { label: 'All displays', click: () => actions.take('all-displays') },
+    { type: 'separator' },
+    {
+      label: delay > 0 ? `Countdown (${delay} s)` : 'Countdown',
+      submenu: delays.map((s) => ({
+        label: s === 0 ? 'No countdown' : `${s} seconds`,
+        type: 'radio' as const,
+        checked: s === delay,
+        click: () => settingsStore.update({ screenshot: { delaySeconds: s } })
+      }))
+    },
+    {
+      label: 'Copy to clipboard',
+      type: 'checkbox',
+      checked: settingsStore.get().screenshot.copyToClipboard,
+      click: (item) => settingsStore.update({ screenshot: { copyToClipboard: item.checked } })
+    },
     { type: 'separator' },
     {
       label: 'Open Screenshot Tool',
@@ -74,7 +95,8 @@ export function popupScreenshotMenu(take: (mode: ScreenshotMode) => void): void 
         showMainWindow()
         sendTo(getMainWindow(), 'navigate', { page: 'screenshot' })
       }
-    }
+    },
+    { label: 'Open screenshots folder', click: actions.openFolder }
   ])
   menu.popup(win ? { window: win } : {})
 }

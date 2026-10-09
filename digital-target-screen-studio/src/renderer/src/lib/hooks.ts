@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Settings, SettingsPatch } from '@shared/settings'
+import { resolveTheme, type EffectiveTheme, type Settings, type SettingsPatch } from '@shared/settings'
 import type { AudioLevels, RecordingState } from '@shared/types'
 
 export const dt = window.dt
@@ -59,11 +59,24 @@ export function useInterval(fn: () => void, ms: number | null): void {
   }, [ms])
 }
 
-/** Applies theme / motion preferences to the document. */
-export function useThemeSync(settings: Settings | null): void {
+/** Applies the theme (resolving "System" live from Windows) and motion preferences. */
+export function useThemeSync(settings: Settings | null): EffectiveTheme | null {
+  const theme = settings?.general.theme
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const onChange = () => setSystemDark(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  const effective = theme ? resolveTheme(theme, systemDark) : null
+  useEffect(() => {
+    if (!effective) return
+    document.documentElement.dataset.theme = effective
+  }, [effective])
   useEffect(() => {
     if (!settings) return
-    document.documentElement.dataset.theme = settings.general.theme
     document.documentElement.dataset.motion = settings.general.reduceMotion ? 'reduced' : 'full'
   }, [settings])
+  return effective
 }

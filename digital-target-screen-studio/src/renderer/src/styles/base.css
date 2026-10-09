@@ -3,7 +3,7 @@
 @import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
 
-/* Digital Target design tokens */
+/* Digital Target design tokens — Dark (default) */
 :root {
   --dt-primary: #3c096c;
   --dt-secondary: #5a189a;
@@ -17,25 +17,62 @@
   --surface-3: #2b1b47;
   --border: rgba(224, 170, 255, 0.1);
   --border-strong: rgba(224, 170, 255, 0.22);
+  /* Accent tint used for hovers, chips and subtle fills: rgb(var(--tint) / alpha) */
+  --tint: 224 170 255;
+  /* Brand-purple tint used for selected states (alpha scaled by --sel-k) */
+  --sel: 90 24 154;
+  --sel-k: 1;
 
   --text: #f7f2ff;
   --text-2: #cfc4e0;
   --text-3: #a497b8;
+  --on-brand: #ffffff;
 
   --danger: #ff5c7a;
+  --danger-text: #ffb3c1;
   --danger-bg: rgba(255, 92, 122, 0.12);
   --success: #4ade9b;
   --success-bg: rgba(74, 222, 155, 0.12);
   --warning: #ffc861;
   --warning-bg: rgba(255, 200, 97, 0.12);
   --info: #9cc9ff;
+  --info-bg: rgba(156, 201, 255, 0.07);
   --rec: #ff3b5c;
+  --rec-text: #ff8fa3;
+  --rec-bg: rgba(255, 59, 92, 0.1);
+  --rec-border: rgba(255, 59, 92, 0.35);
+  --success-border: rgba(74, 222, 155, 0.28);
+  --warning-border: rgba(255, 200, 97, 0.3);
+  --danger-border: rgba(255, 92, 122, 0.35);
+  --danger-hover: rgba(255, 92, 122, 0.2);
+
+  /* The top band stays plain --bg so the Windows caption buttons (painted in that colour) blend in. */
+  --shell-bg:
+    linear-gradient(var(--bg) 44px, transparent 140px),
+    radial-gradient(900px 500px at 110% -10%, rgba(90, 24, 154, 0.22), transparent 60%),
+    radial-gradient(700px 420px at -10% 110%, rgba(60, 9, 108, 0.25), transparent 60%),
+    #0d0717;
+  --sidebar-bg: rgba(10, 5, 18, 0.55);
+  --card-bg: linear-gradient(180deg, rgba(33, 20, 55, 0.72), rgba(24, 14, 43, 0.72));
+  --modal-bg: #170d29;
+  --toast-bg: #1f1236;
+  --tooltip-bg: #2a1a44;
+  --backdrop: rgba(5, 2, 12, 0.65);
+  --switch-knob: #cbbfe0;
+  --switch-off-bg: var(--surface-3);
+  --switch-off-border: var(--border-strong);
+  --checker-a: #160c26;
+  --checker-b: #1c1030;
+  --media-bg: #07040d;
+  /* Placeholder icons on media backgrounds (dark in every theme) */
+  --media-icon: #a497b8;
 
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
   --shadow: 0 10px 30px rgba(5, 2, 12, 0.45);
   --shadow-sm: 0 2px 8px rgba(5, 2, 12, 0.35);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.6);
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--dt-accent);
 
   --font: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -47,6 +84,7 @@
   color-scheme: dark;
 }
 
+/* Midnight — darker, higher-contrast dark theme */
 :root[data-theme='midnight'] {
   --bg: #06030c;
   --bg-elev: #0b0616;
@@ -56,6 +94,80 @@
   --border: rgba(224, 170, 255, 0.14);
   --text-2: #dcd3ea;
   --text-3: #b3a7c6;
+  --shell-bg:
+    linear-gradient(var(--bg) 44px, transparent 140px),
+    radial-gradient(900px 500px at 110% -10%, rgba(90, 24, 154, 0.14), transparent 60%),
+    #06030c;
+  --sidebar-bg: rgba(0, 0, 0, 0.35);
+  /* Cards sit a step above the page; tiles inside use --surface */
+  --card-bg: linear-gradient(180deg, #150d27, #100a1d);
+  --modal-bg: #110a1f;
+  --toast-bg: #170e27;
+}
+
+/* Light — bright Digital Target theme with deep-purple accents */
+:root[data-theme='light'] {
+  --dt-accent: #7b2cbf;
+  --dt-accent-strong: #5a189a;
+
+  --bg: #f6f3fb;
+  --bg-elev: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f2edf9;
+  --surface-3: #e7def4;
+  --border: rgba(60, 9, 108, 0.11);
+  --border-strong: rgba(60, 9, 108, 0.22);
+  --tint: 90 24 154;
+  --sel: 123 44 191;
+  --sel-k: 0.32;
+
+  --text: #1b1029;
+  --text-2: #3d3150;
+  --text-3: #645878;
+  --on-brand: #ffffff;
+
+  --danger: #d0173d;
+  --danger-text: #b3122f;
+  --danger-bg: rgba(208, 23, 61, 0.08);
+  --success: #0f7a4a;
+  --success-bg: rgba(15, 122, 74, 0.09);
+  --warning: #9a5600;
+  --warning-bg: rgba(214, 140, 0, 0.12);
+  --info: #1b62bd;
+  --info-bg: rgba(27, 98, 189, 0.07);
+  --rec: #e8264a;
+  --rec-text: #c8143a;
+  --rec-bg: rgba(232, 38, 74, 0.07);
+  --rec-border: rgba(232, 38, 74, 0.4);
+  --success-border: rgba(15, 122, 74, 0.35);
+  --warning-border: rgba(154, 86, 0, 0.35);
+  --danger-border: rgba(208, 23, 61, 0.35);
+  --danger-hover: rgba(208, 23, 61, 0.14);
+
+  --shell-bg:
+    linear-gradient(var(--bg) 44px, transparent 140px),
+    radial-gradient(900px 500px at 110% -10%, rgba(157, 78, 221, 0.12), transparent 60%),
+    radial-gradient(700px 420px at -10% 110%, rgba(90, 24, 154, 0.08), transparent 60%),
+    #f6f3fb;
+  --sidebar-bg: rgba(255, 255, 255, 0.7);
+  --card-bg: #ffffff;
+  --modal-bg: #ffffff;
+  --toast-bg: #ffffff;
+  --tooltip-bg: #2a1a44;
+  --backdrop: rgba(27, 16, 41, 0.35);
+  /* Windows 11-style off switch: outlined track with a dark knob */
+  --switch-knob: #6a5d80;
+  --switch-off-bg: #ffffff;
+  --switch-off-border: #8a7ca0;
+  --checker-a: #ece6f4;
+  --checker-b: #f6f2fb;
+  --media-bg: #120a20;
+
+  --shadow: 0 10px 30px rgba(60, 9, 108, 0.14);
+  --shadow-sm: 0 1px 3px rgba(60, 9, 108, 0.1), 0 1px 2px rgba(60, 9, 108, 0.06);
+  --shadow-modal: 0 24px 60px rgba(60, 9, 108, 0.22);
+
+  color-scheme: light;
 }
 
 :root[data-motion='reduced'] {
@@ -113,7 +225,7 @@ button {
 }
 
 ::selection {
-  background: rgba(224, 170, 255, 0.35);
+  background: rgb(var(--tint) / 0.3);
 }
 
 ::-webkit-scrollbar {
@@ -121,13 +233,13 @@ button {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(224, 170, 255, 0.16);
+  background: rgb(var(--tint) / 0.2);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(224, 170, 255, 0.28);
+  background-color: rgb(var(--tint) / 0.32);
 }
 ::-webkit-scrollbar-track {
   background: transparent;

@@ -80,7 +80,13 @@ jobs:
           if (-not (Select-String -Path $log -Pattern 'FFmpeg .* ready')) { throw 'Bundled FFmpeg was not detected by the installed app' }
           if (Select-String -Path $log -Pattern '\[ERROR\]') { throw 'Errors in app log' }
           Start-Sleep -Seconds 2
-          Start-Process (Join-Path $dir 'Uninstall Digital Target Screen Studio.exe') -ArgumentList '/S' -Wait
+          $uninstaller = Get-ChildItem $dir -Filter 'Uninstall *.exe' | Select-Object -First 1
+          if (-not $uninstaller) { throw 'Uninstaller missing from install' }
+          Start-Process $uninstaller.FullName -ArgumentList '/S' -Wait
+          # The NSIS uninstaller re-launches itself from %TEMP%, so wait for the files to go
+          for ($i = 0; $i -lt 30 -and (Test-Path $exe); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path $exe) { throw 'Uninstaller did not remove the application' }
+          Write-Host 'Install, launch and uninstall verified'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

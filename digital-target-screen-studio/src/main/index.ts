@@ -1,13 +1,13 @@
-import { app, BrowserWindow, session } from 'electron'
+import { app, BrowserWindow, nativeTheme, session } from 'electron'
 import { BRAND } from '../shared/constants'
-import type { Settings } from '../shared/settings'
+import { resolveTheme, type Settings } from '../shared/settings'
 import { registerIpcHandlers, takeScreenshot } from './ipc/handlers'
 import { createLogger, initLogger } from './logger'
 import { isTrustedUrl } from './paths'
 import { registerProtocolHandlers, registerSchemes, setMediaRoots } from './protocols'
 import { settingsStore } from './settings-store'
 import { messageBox } from './dialogs'
-import { createMainWindow, createSplash, getMainWindow, roleOf, showMainWindow } from './windows'
+import { applyNativeTheme, applyWindowChrome, createMainWindow, createSplash, getMainWindow, roleOf, showMainWindow } from './windows'
 import { engine } from './services/engine-client'
 import { broadcast, notify } from './services/events'
 import { ffmpeg } from './services/ffmpeg'
@@ -61,7 +61,7 @@ async function bootstrap(): Promise<void> {
   const startHidden = process.argv.includes('--hidden') || settings.general.startMinimized
   const splash = settings.general.showSplash && !startHidden ? createSplash() : null
   const splashShownAt = Date.now()
-  const main = createMainWindow({ show: false })
+  const main = createMainWindow({ show: false, theme: applyNativeTheme(settings.general.theme) })
   main.once('ready-to-show', () => {
     const wait = splash ? Math.max(0, 1100 - (Date.now() - splashShownAt)) : 0
     setTimeout(() => {
@@ -107,6 +107,7 @@ async function bootstrap(): Promise<void> {
     }
     if (JSON.stringify(next.toolbar) !== JSON.stringify(previous.toolbar)) syncToolbar()
     if (JSON.stringify(next.webcam) !== JSON.stringify(previous.webcam)) syncWebcam()
+    if (next.general.theme !== previous.general.theme) applyWindowChrome(applyNativeTheme(next.general.theme))
     rebuildTray()
     previous = next
   })
@@ -120,6 +121,11 @@ async function bootstrap(): Promise<void> {
   })
   // Offer to recover recordings interrupted by a crash or power loss.
   setTimeout(() => void recorder.announceRecoverable(), 2500)
+
+  // Follow Windows light/dark changes when the theme is set to System.
+  nativeTheme.on('updated', () => {
+    if (settingsStore.get().general.theme === 'system') applyWindowChrome(resolveTheme('system', nativeTheme.shouldUseDarkColors))
+  })
 
   app.on('activate', () => showMainWindow())
 }

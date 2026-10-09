@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Camera, Circle, Film, Info, LayoutDashboard, Settings as Cog, X, CheckCircle2, AlertTriangle, AlertOctagon, FolderOpen } from 'lucide-react'
+import { Camera, Circle, Film, Info, LayoutDashboard, Settings as Cog, X, CheckCircle2, AlertTriangle, AlertOctagon, FolderOpen, Monitor, Moon, Sun } from 'lucide-react'
+import type { ThemeSetting } from '@shared/settings'
 import type { Page } from '@shared/types'
 import { formatDuration } from '@shared/format'
 import { useElapsed } from '../lib/hooks'
@@ -83,6 +84,36 @@ function Toasts() {
   )
 }
 
+const QUICK_THEMES: Array<{ value: ThemeSetting; label: string; icon: typeof Sun }> = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor }
+]
+
+/** Compact Light / Dark / System switch in the sidebar (Midnight shows as Dark; clicking Dark returns to it). */
+function ThemeSwitch() {
+  const { settings, update } = useApp()
+  const stored = settings.general.theme
+  const current = stored === 'midnight' ? 'dark' : stored
+  return (
+    <div className="theme-switch" role="radiogroup" aria-label="Theme">
+      {QUICK_THEMES.map(({ value, label, icon: Icon }) => (
+        <button
+          key={value}
+          role="radio"
+          aria-checked={current === value}
+          className={current === value ? 'active' : ''}
+          onClick={() => stored !== value && void update({ general: { theme: value } })}
+          title={value === 'system' ? 'Follow the Windows light/dark setting' : value === 'dark' && stored === 'midnight' ? 'Midnight theme is on — click for the standard Dark theme' : `${label} theme`}
+        >
+          <Icon size={14} />
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function App() {
   const { page, navigate, info } = useApp()
 
@@ -125,6 +156,7 @@ export function App() {
         </nav>
         <div className="sidebar-foot">
           <RecordingPill />
+          <ThemeSwitch />
           <div className="sidebar-version">
             {info ? `Version ${info.version}` : ''}
             <span>Local &amp; private · No uploads</span>

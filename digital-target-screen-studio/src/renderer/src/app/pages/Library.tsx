@@ -231,7 +231,7 @@ function VideoPlayer({ src }: { src: string }) {
   return (
     <div className="player">
       {error ? (
-        <div style={{ padding: 24 }}><Notice tone="warning">This video cannot be previewed here. Use Open to play it in your default player.</Notice></div>
+        <div className="player-error"><Notice tone="warning">This video cannot be previewed here. Use Open to play it in your default player.</Notice></div>
       ) : (
         <video
           ref={v}

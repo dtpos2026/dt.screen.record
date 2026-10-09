@@ -1,26 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Camera, ChevronDown, EyeOff, Pause, Play, Settings as Cog, Square, Trash2 } from 'lucide-react'
+import type { ScreenshotMode } from '@shared/settings'
+import { AppWindow, ChevronDown, EyeOff, Images, Monitor, Pause, Play, Settings as Cog, Square, SquareDashed, Trash2 } from 'lucide-react'
 import { formatDuration } from '@shared/format'
 import { meterPosition } from '../lib/audio-chain'
-import { dt, useAudioLevels, useElapsed, useRecordingState, useSettings } from '../lib/hooks'
+import { dt, useAudioLevels, useElapsed, useRecordingState, useSettings, useThemeSync } from '../lib/hooks'
 import mark from '../assets/brand/mark-white.svg'
 import '../styles/base.css'
 import './toolbar.css'
 
-/** Slim, draggable, always-on-top recording toolbar (hidden from captures). */
+const SHOTS: { mode: ScreenshotMode; label: string; Icon: typeof Monitor }[] = [
+  { mode: 'region', label: 'Region screenshot', Icon: SquareDashed },
+  { mode: 'fullscreen', label: 'Full-screen screenshot', Icon: Monitor },
+  { mode: 'window', label: 'Window screenshot', Icon: AppWindow }
+]
+
+/** Slim, draggable, always-on-top recording and screenshot toolbar (hidden from captures). */
 function Toolbar() {
   const state = useRecordingState()
   const [settings] = useSettings()
   const elapsed = useElapsed(state)
   const levels = useAudioLevels()
   const [busy, setBusy] = useState(false)
+  // Separate from `busy` so a delayed screenshot never blocks Stop/Pause.
+  const [shooting, setShooting] = useState(false)
   const status = state?.status ?? 'idle'
   const active = status === 'recording' || status === 'paused'
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = settings?.general.theme ?? 'dark'
-  }, [settings?.general.theme])
+  useThemeSync(settings)
 
   const run = async (fn: () => Promise<unknown>) => {
     if (busy) return
@@ -30,6 +37,12 @@ function Toolbar() {
     } finally {
       setBusy(false)
     }
+  }
+
+  const shoot = (mode: ScreenshotMode) => {
+    if (shooting) return
+    setShooting(true)
+    void dt.invoke('screenshot:capture', { mode }).finally(() => setShooting(false))
   }
 
   const limit = state?.limitMs ?? 0
@@ -47,6 +60,7 @@ function Toolbar() {
               ? `SAVING ${Math.round(state?.finalizeProgress ?? 0)}%`
               : 'READY'
   const mic = levels.mic ? meterPosition(levels.mic.peak) : 0
+  const delay = settings?.screenshot.delaySeconds ?? 0
 
   return (
     <div className={`tb tb-${status}`}>
@@ -93,19 +107,32 @@ function Toolbar() {
           </button>
         )}
         <span className="tb-sep" />
-        <div className="tb-split">
-          <button
-            className="tb-btn"
-            onClick={() => run(() => dt.invoke('screenshot:capture', { mode: settings?.screenshot.defaultMode ?? 'region' }))}
-            title="Take screenshot"
-            aria-label="Take screenshot"
-          >
-            <Camera size={15} />
-          </button>
-          <button className="tb-btn tb-caret" onClick={() => void dt.invoke('toolbar:screenshotMenu')} title="Screenshot options" aria-label="Screenshot options">
+        <div className="tb-group" role="group" aria-label="Screenshot">
+          {SHOTS.map(({ mode, label, Icon }) => (
+            <button
+              key={mode}
+              className="tb-btn"
+              disabled={shooting}
+              onClick={() => shoot(mode)}
+              title={delay > 0 ? `${label} (after ${delay} s)` : label}
+              aria-label={label}
+            >
+              <Icon size={15} />
+            </button>
+          ))}
+          {delay > 0 && (
+            <span className="tb-delay tabular" title={`Screenshots start after a ${delay}-second countdown`}>
+              {delay}s
+            </span>
+          )}
+          <button className="tb-btn tb-caret" onClick={() => void dt.invoke('toolbar:screenshotMenu')} title="More screenshot options" aria-label="Screenshot options">
             <ChevronDown size={13} />
           </button>
         </div>
+        <span className="tb-sep" />
+        <button className="tb-btn" onClick={() => void dt.invoke('window:navigate', { page: 'library' })} title="Library" aria-label="Open library">
+          <Images size={15} />
+        </button>
         <button className="tb-btn" onClick={() => void dt.invoke('window:navigate', { page: 'settings' })} title="Settings" aria-label="Open settings">
           <Cog size={15} />
         </button>

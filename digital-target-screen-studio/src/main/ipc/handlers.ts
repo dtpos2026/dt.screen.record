@@ -76,6 +76,13 @@ export function takeScreenshot(mode: ScreenshotMode): void {
   })
 }
 
+async function openFolder(kind: 'recordings' | 'screenshots' | 'logs'): Promise<void> {
+  const s = settingsStore.get().general
+  const dir = kind === 'recordings' ? s.recordingsDir : kind === 'screenshots' ? s.screenshotsDir : join(app.getPath('userData'), 'logs')
+  await ensureWritableDir(dir)
+  await shell.openPath(dir)
+}
+
 const SYSTEM_SETTINGS_URI: Record<string, string> = {
   microphone: 'ms-settings:privacy-microphone',
   camera: 'ms-settings:privacy-webcam',
@@ -109,12 +116,7 @@ export function registerIpcHandlers(): void {
     return picked[0]
   })
 
-  handle('shell:openFolder', ['main', 'toolbar'], S.openFolder, async ({ kind }) => {
-    const s = settingsStore.get().general
-    const dir = kind === 'recordings' ? s.recordingsDir : kind === 'screenshots' ? s.screenshotsDir : join(app.getPath('userData'), 'logs')
-    await ensureWritableDir(dir)
-    await shell.openPath(dir)
-  })
+  handle('shell:openFolder', ['main', 'toolbar'], S.openFolder, ({ kind }) => openFolder(kind))
 
   handle('shell:openSystemSettings', MAIN, S.systemSettings, async ({ target }) => {
     if (process.platform === 'win32') await shell.openExternal(SYSTEM_SETTINGS_URI[target])
@@ -204,7 +206,9 @@ export function registerIpcHandlers(): void {
   })
   handle('window:minimize', MAIN, null, () => getMainWindow()?.minimize())
   handle('toolbar:toggle', ['main', 'toolbar'], S.toolbarToggle, ({ visible }) => setToolbarVisible(visible))
-  handle('toolbar:screenshotMenu', ['toolbar'], null, () => popupScreenshotMenu(takeScreenshot))
+  handle('toolbar:screenshotMenu', ['toolbar'], null, () =>
+    popupScreenshotMenu({ take: takeScreenshot, openFolder: () => void openFolder('screenshots').catch((err) => log.warn('Could not open folder', err)) })
+  )
   handle('toolbar:resize', ['toolbar'], S.toolbarResize, ({ width, height }) => resizeToolbar(width, height))
 
   // ---------------------------------------------------------------- overlays

@@ -307,6 +307,104 @@ test('floating toolbar starts and stops a recording', async () => {
   await page.evaluate(() => window.dt.invoke('toolbar:toggle', { visible: false }))
 })
 
+test('floating toolbar takes screenshots and follows the theme', async () => {
+  await setSettings(page, { screenshot: { showPreview: false, format: 'png', delaySeconds: 0 }, general: { theme: 'light' } })
+  await page.evaluate(() => window.dt.invoke('toolbar:toggle', { visible: true }))
+  const tb = await waitFor(() => L.app.windows().find((w) => w.url().includes('toolbar.html')), 15_000, 'toolbar')
+  await tb.waitForLoadState('domcontentloaded')
+  await expect(tb.locator('html')).toHaveAttribute('data-theme', 'light')
+  for (const name of ['Region screenshot', 'Full-screen screenshot', 'Window screenshot', 'Screenshot options', 'Open library', 'Open settings', 'Hide toolbar']) {
+    await expect(tb.getByRole('button', { name })).toBeVisible()
+  }
+  // Every control fits inside the toolbar window.
+  const overflow = await tb.evaluate(() => {
+    const bar = document.querySelector('.tb')!.getBoundingClientRect()
+    return [...document.querySelectorAll('.tb-actions > *')].filter((el) => el.getBoundingClientRect().right > bar.right + 0.5).length
+  })
+  expect(overflow).toBe(0)
+
+  const before = new Set(filesIn(L.outDir, /DT-Screenshot.*\.png$/))
+  await tb.getByRole('button', { name: 'Full-screen screenshot' }).click()
+  const file = await waitFor(() => filesIn(L.outDir, /DT-Screenshot.*\.png$/).find((f) => !before.has(f)), 20_000, 'toolbar screenshot')
+  // Full screen = the display under the pointer, at its native size.
+  const sizes = (await page.evaluate(() => window.dt.invoke('capture:displays', {}))).map((d) => `${d.physicalSize.width}x${d.physicalSize.height}`)
+  const img = imageInfo(file)
+  expect(img.type).toBe('png')
+  expect(sizes).toContain(`${img.width}x${img.height}`)
+
+  // Region: the selection overlay opens; Escape cancels without saving anything.
+  const count = filesIn(L.outDir, /DT-Screenshot/).length
+  await tb.getByRole('button', { name: 'Region screenshot' }).click()
+  const overlay = await waitFor(() => L.app.windows().find((w) => w.url().includes('overlay.html')), 15_000, 'overlay')
+  await overlay.waitForLoadState('domcontentloaded')
+  await overlay.waitForTimeout(500)
+  // The overlay listens for keys once React has mounted; repeat Escape until it closes.
+  await waitFor(async () => {
+    const open = L.app.windows().filter((w) => w.url().includes('overlay.html'))
+    if (!open.length) return true
+    await open[0].keyboard.press('Escape').catch(() => undefined)
+    return undefined
+  }, 15_000, 'overlay closed')
+  expect(filesIn(L.outDir, /DT-Screenshot/).length).toBe(count)
+
+  // The countdown chosen in the toolbar menu is shown on the toolbar.
+  await setSettings(page, { screenshot: { delaySeconds: 3 } })
+  await expect(tb.locator('.tb-delay')).toHaveText('3s')
+  await setSettings(page, { screenshot: { delaySeconds: 0, showPreview: true }, general: { theme: 'dark' } })
+  await expect(tb.locator('html')).toHaveAttribute('data-theme', 'dark')
+  await tb.getByRole('button', { name: 'Open library' }).click()
+  await expect(page.locator('.titlebar h1')).toHaveText('Media Library')
+  await page.evaluate(() => window.dt.invoke('toolbar:toggle', { visible: false }))
+})
+
+test('light, dark and system themes apply across the app', async () => {
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme)
+  const sw = page.getByRole('radiogroup', { name: 'Theme' }).first()
+  await sw.getByRole('radio', { name: 'Light' }).click()
+  await expect.poll(theme).toBe('light')
+  expect(await bg()).toBe('rgb(246, 243, 251)')
+  expect((await page.evaluate(() => window.dt.invoke('settings:get'))).general.theme).toBe('light')
+  // Text stays readable on the light background (WCAG AA, 4.5:1).
+  const contrast = await page.evaluate(() => {
+    const lum = (c: string) => {
+      const [r, g, b] = c.match(/\d+(\.\d+)?/g)!.slice(0, 3).map((v) => {
+        const x = Number(v) / 255
+        return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const bgL = lum(getComputedStyle(document.body).backgroundColor)
+    return ['.titlebar h1', '.nav-item', '.sidebar-version'].map((sel) => {
+      const l = lum(getComputedStyle(document.querySelector(sel)!).color)
+      return (Math.max(l, bgL) + 0.05) / (Math.min(l, bgL) + 0.05)
+    })
+  })
+  for (const ratio of contrast) expect(ratio).toBeGreaterThan(4.5)
+
+  await sw.getByRole('radio', { name: 'Dark' }).click()
+  await expect.poll(theme).toBe('dark')
+  expect(await bg()).toBe('rgb(13, 7, 23)')
+
+  // System follows the operating system's light/dark preference.
+  await sw.getByRole('radio', { name: 'System' }).click()
+  await page.emulateMedia({ colorScheme: 'light' })
+  await expect.poll(theme).toBe('light')
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await expect.poll(theme).toBe('dark')
+  await page.emulateMedia({ colorScheme: null })
+
+  // Settings page offers all four themes, including Midnight.
+  await page.getByRole('button', { name: 'Settings' }).first().click()
+  const picker = page.locator('.content').getByRole('radiogroup', { name: 'Theme' })
+  await picker.getByRole('radio', { name: 'Midnight' }).click()
+  await expect.poll(theme).toBe('midnight')
+  expect(await bg()).toBe('rgb(6, 3, 12)')
+  await picker.getByRole('radio', { name: 'Dark', exact: true }).click()
+  await expect.poll(theme).toBe('dark')
+  await page.getByRole('button', { name: 'Dashboard' }).first().click()
+})
+
 test('global shortcut takes a full-screen screenshot', async () => {
   test.skip(!isLinux || !hasCommand('xdotool'), 'needs xdotool')
   await setSettings(page, { screenshot: { showPreview: false, format: 'png' } })
@@ -457,7 +555,7 @@ test('clear errors for an unusable save folder and a missing microphone', async 
 })
 
 test('settings persist across restarts', async () => {
-  const A = await launch({ settings: { recording: { fps: 60, quality: 'ultra' }, screenshot: { format: 'webp' } } })
+  const A = await launch({ settings: { recording: { fps: 60, quality: 'ultra' }, screenshot: { format: 'webp' }, general: { theme: 'light' } } })
   await A.page.waitForTimeout(600)
   await A.app.close()
   const B = await launch({ userData: A.userData, outDir: A.outDir, keepSettings: true })
@@ -466,6 +564,8 @@ test('settings persist across restarts', async () => {
     expect(s.recording.fps).toBe(60)
     expect(s.recording.quality).toBe('ultra')
     expect(s.screenshot.format).toBe('webp')
+    expect(s.general.theme).toBe('light')
+    await expect.poll(() => B.page.evaluate(() => document.documentElement.dataset.theme)).toBe('light')
   } finally {
     await B.app.close()
   }

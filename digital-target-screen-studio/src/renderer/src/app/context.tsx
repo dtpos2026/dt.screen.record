@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { Settings, SettingsPatch } from '@shared/settings'
+import type { EffectiveTheme, Settings, SettingsPatch } from '@shared/settings'
 import type { AppInfo, FfmpegInfo, Page, RecordingState, Toast } from '@shared/types'
 import { dt, useRecordingState, useSettings, useThemeSync } from '../lib/hooks'
 
@@ -8,6 +8,8 @@ interface AppContextValue {
   params: Record<string, string>
   navigate: (page: Page, params?: Record<string, string>) => void
   settings: Settings
+  /** The theme currently shown (System resolved to Light or Dark). */
+  theme: EffectiveTheme
   update: (patch: SettingsPatch) => Promise<void>
   recording: RecordingState | null
   info: AppInfo | null
@@ -35,7 +37,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [info, setInfo] = useState<AppInfo | null>(null)
   const [ffmpeg, setFfmpeg] = useState<FfmpegInfo | null>(null)
   const [toasts, setToasts] = useState<Array<Toast & { id: number }>>([])
-  useThemeSync(settings)
+  const theme = useThemeSync(settings)
 
   const navigate = useCallback((page: Page, params: Record<string, string> = {}) => setRoute({ page, params }), [])
   const toast = useCallback((t: Toast) => {
@@ -57,10 +59,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () =>
-      settings
-        ? { page: route.page, params: route.params, navigate, settings, update, recording, info, ffmpeg, refreshFfmpeg, toast, toasts, dismissToast }
+      settings && theme
+        ? { page: route.page, params: route.params, navigate, settings, theme, update, recording, info, ffmpeg, refreshFfmpeg, toast, toasts, dismissToast }
         : null,
-    [route, navigate, settings, update, recording, info, ffmpeg, refreshFfmpeg, toast, toasts, dismissToast]
+    [route, navigate, settings, theme, update, recording, info, ffmpeg, refreshFfmpeg, toast, toasts, dismissToast]
   )
   if (!value) return null
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

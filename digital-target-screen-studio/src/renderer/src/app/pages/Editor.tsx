@@ -9,6 +9,19 @@ import { useApp } from '../context'
 import { FONT, bounds, clampBox, hitTest, moveBy, normBox, renderDocument, textLines, type Annotation, type Box } from '../editor/render'
 
 type Tool = 'select' | 'crop' | 'arrow' | 'line' | 'rect' | 'ellipse' | 'text' | 'highlight' | 'pixelate' | 'blur'
+
+const TOOL_HINTS: Record<Tool, string> = {
+  select: 'Click an annotation to select it, drag to move it, Delete to remove it.',
+  crop: 'Drag on the image to choose the area to keep.',
+  arrow: '',
+  line: '',
+  rect: '',
+  ellipse: '',
+  text: '',
+  highlight: '',
+  pixelate: '',
+  blur: ''
+}
 interface Doc {
   base: ImageBitmap
   anns: Annotation[]
@@ -381,6 +394,7 @@ export function Editor() {
 
   const isShape = tool === 'arrow' || tool === 'line' || tool === 'rect' || tool === 'ellipse'
   const sel = selected != null ? doc.anns[selected] : null
+  const hasOptions = isShape || tool === 'text' || tool === 'highlight' || tool === 'pixelate' || tool === 'blur' || !!crop || !!sel
 
   return (
     <div className="editor">
@@ -395,7 +409,25 @@ export function Editor() {
             </IconButton>
           )
         })}
-        <span className="sep" />
+        <span style={{ flex: 1 }} />
+        {/* Kept in view when the tools overflow on narrow windows */}
+        <div className="editor-actions">
+          <IconButton label="Undo (Ctrl+Z)" disabled={!past.length} onClick={undo}><Undo2 size={17} /></IconButton>
+          <IconButton label="Redo (Ctrl+Y)" disabled={!future.length} onClick={redo}><Redo2 size={17} /></IconButton>
+          <span className="sep" />
+          <IconButton label="Zoom out" onClick={() => setZoom(Math.max(0.1, (zoom === 'fit' ? scale : zoom) / 1.25))}><ZoomOut size={16} /></IconButton>
+          <button className="btn btn-ghost btn-sm tabular" onClick={() => setZoom(zoom === 'fit' ? 1 : 'fit')} data-tip="Toggle fit / 100%">{Math.round(scale * 100)}%</button>
+          <IconButton label="Zoom in" onClick={() => setZoom(Math.min(4, (zoom === 'fit' ? scale : zoom) * 1.25))}><ZoomIn size={16} /></IconButton>
+          <IconButton label="Resize image" onClick={() => setResizeOpen(true)}><Maximize2 size={16} /></IconButton>
+          <span className="sep" />
+          <IconButton label="Copy to clipboard (Ctrl+C)" onClick={() => void copy()}><Copy size={16} /></IconButton>
+          <Button size="sm" variant="secondary" icon={<Download size={14} />} loading={saving === 'dialog'} onClick={() => void save('dialog')} tip="Ctrl+Shift+S">Save As…</Button>
+          {sourcePath && <Button size="sm" variant="ghost" loading={saving === 'overwrite'} onClick={() => void save('overwrite')}>Overwrite</Button>}
+          <Button size="sm" variant="primary" icon={<Save size={14} />} loading={saving === 'auto'} onClick={() => void save('auto')} tip={`Saves a new ${settings.screenshot.format.toUpperCase()} — Ctrl+S`}>Save copy</Button>
+        </div>
+      </div>
+      {/* Options for the current tool: a fixed-height row, so the canvas never moves */}
+      <div className="editor-options" role="toolbar" aria-label="Tool options">
         {(isShape || tool === 'text' || (sel && sel.t !== 'pixelate' && sel.t !== 'blur' && sel.t !== 'highlight')) &&
           COLORS.map((c) => <button key={c} className={`color-dot ${color === c ? 'active' : ''}`} style={{ background: c }} aria-label={`Color ${c}`} onClick={() => setColor(c)} />)}
         {tool === 'highlight' && HIGHLIGHTS.map((c) => <button key={c} className={`color-dot ${hl === c ? 'active' : ''}`} style={{ background: c }} aria-label={`Highlight ${c}`} onClick={() => setHl(c)} />)}
@@ -414,19 +446,7 @@ export function Editor() {
           </>
         )}
         {sel && <IconButton label="Delete annotation (Del)" onClick={() => { commit({ ...doc, anns: doc.anns.filter((_, i) => i !== selected) }); setSelected(null) }}><Trash2 size={16} /></IconButton>}
-        <span style={{ flex: 1 }} />
-        <IconButton label="Undo (Ctrl+Z)" disabled={!past.length} onClick={undo}><Undo2 size={17} /></IconButton>
-        <IconButton label="Redo (Ctrl+Y)" disabled={!future.length} onClick={redo}><Redo2 size={17} /></IconButton>
-        <span className="sep" />
-        <IconButton label="Zoom out" onClick={() => setZoom(Math.max(0.1, (zoom === 'fit' ? scale : zoom) / 1.25))}><ZoomOut size={16} /></IconButton>
-        <button className="btn btn-ghost btn-sm tabular" onClick={() => setZoom(zoom === 'fit' ? 1 : 'fit')} data-tip="Toggle fit / 100%">{Math.round(scale * 100)}%</button>
-        <IconButton label="Zoom in" onClick={() => setZoom(Math.min(4, (zoom === 'fit' ? scale : zoom) * 1.25))}><ZoomIn size={16} /></IconButton>
-        <IconButton label="Resize image" onClick={() => setResizeOpen(true)}><Maximize2 size={16} /></IconButton>
-        <span className="sep" />
-        <IconButton label="Copy to clipboard (Ctrl+C)" onClick={() => void copy()}><Copy size={16} /></IconButton>
-        <Button size="sm" variant="secondary" icon={<Download size={14} />} loading={saving === 'dialog'} onClick={() => void save('dialog')} tip="Ctrl+Shift+S">Save As…</Button>
-        {sourcePath && <Button size="sm" variant="ghost" loading={saving === 'overwrite'} onClick={() => void save('overwrite')}>Overwrite</Button>}
-        <Button size="sm" variant="primary" icon={<Save size={14} />} loading={saving === 'auto'} onClick={() => void save('auto')} tip={`Saves a new ${settings.screenshot.format.toUpperCase()} — Ctrl+S`}>Save copy</Button>
+        {!hasOptions && <span className="editor-hint">{TOOL_HINTS[tool]}</span>}
       </div>
       <div className="editor-stage" ref={stage}>
         <div style={{ position: 'relative', width: W * scale, height: H * scale }}>

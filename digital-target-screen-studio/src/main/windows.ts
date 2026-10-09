@@ -1,4 +1,5 @@
-import { app, BrowserWindow, screen, type BrowserWindowConstructorOptions, type WebContents } from 'electron'
+import { app, BrowserWindow, nativeTheme, screen, type BrowserWindowConstructorOptions, type WebContents } from 'electron'
+import { resolveTheme, THEME_CHROME, type EffectiveTheme, type ThemeSetting } from '../shared/settings'
 import { createLogger } from './logger'
 import { brandAsset, isTrustedUrl, preloadPath, rendererUrl, type RendererPage } from './paths'
 
@@ -12,7 +13,26 @@ export function roleOf(contents: WebContents): WindowRole | undefined {
   return roles.get(contents.id)
 }
 
-const BG = '#0d0717'
+/** Applies a theme setting to native UI (menus, dialogs) and returns the effective theme. */
+export function applyNativeTheme(theme: ThemeSetting): EffectiveTheme {
+  nativeTheme.themeSource = theme === 'system' ? 'system' : theme === 'light' ? 'light' : 'dark'
+  return resolveTheme(theme, nativeTheme.shouldUseDarkColors)
+}
+
+/** Updates the main window's caption buttons and background to match the theme. */
+export function applyWindowChrome(theme: EffectiveTheme): void {
+  const win = getMainWindow()
+  if (!win) return
+  const c = THEME_CHROME[theme]
+  win.setBackgroundColor(c.background)
+  if (process.platform !== 'darwin') {
+    try {
+      win.setTitleBarOverlay({ color: c.background, symbolColor: c.symbol, height: 44 })
+    } catch {
+      // Title-bar overlay is not available on every platform/window manager.
+    }
+  }
+}
 
 function hardened(options: BrowserWindowConstructorOptions, extra?: Electron.WebPreferences): BrowserWindowConstructorOptions {
   return {
@@ -70,7 +90,13 @@ export function getMainWindow(): BrowserWindow | null {
   return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null
 }
 
-export function createMainWindow(opts: { show: boolean }): BrowserWindow {
+/** Lets the preload apply the theme before the first paint (the page's settings take over after). */
+function themeArgs(theme: EffectiveTheme): Electron.WebPreferences {
+  return { additionalArguments: [`--dt-theme=${theme}`] }
+}
+
+export function createMainWindow(opts: { show: boolean; theme: EffectiveTheme }): BrowserWindow {
+  const chrome = THEME_CHROME[opts.theme]
   const work = screen.getPrimaryDisplay().workAreaSize
   const width = Math.min(1320, Math.max(980, Math.round(work.width * 0.78)))
   const height = Math.min(860, Math.max(660, Math.round(work.height * 0.82)))
@@ -82,11 +108,11 @@ export function createMainWindow(opts: { show: boolean }): BrowserWindow {
       minHeight: 640,
       show: false,
       title: 'Digital Target Screen Studio',
-      backgroundColor: BG,
+      backgroundColor: chrome.background,
       titleBarStyle: 'hidden',
-      titleBarOverlay: { color: BG, symbolColor: '#E0AAFF', height: 44 },
+      titleBarOverlay: { color: chrome.background, symbolColor: chrome.symbol, height: 44 },
       autoHideMenuBar: true
-    })
+    }, themeArgs(opts.theme))
   )
   win.setMenu(null)
   guard(win, 'main')
@@ -152,7 +178,7 @@ export function createEngineWindow(): BrowserWindow {
 // ---------------------------------------------------------------- floating toolbar
 
 let toolbarWindow: BrowserWindow | null = null
-export const TOOLBAR_SIZE = { width: 468, height: 56 }
+export const TOOLBAR_SIZE = { width: 640, height: 56 }
 
 export function getToolbarWindow(): BrowserWindow | null {
   return toolbarWindow && !toolbarWindow.isDestroyed() ? toolbarWindow : null
@@ -172,7 +198,7 @@ export function visiblePosition(x: number | null, y: number | null, size: { widt
   return { x: Math.round(a.x + (a.width - size.width) / 2), y: a.y + 16 }
 }
 
-export function createToolbarWindow(pos: { x: number | null; y: number | null }, onMoved: (x: number, y: number) => void): BrowserWindow {
+export function createToolbarWindow(pos: { x: number | null; y: number | null }, theme: EffectiveTheme, onMoved: (x: number, y: number) => void): BrowserWindow {
   const p = visiblePosition(pos.x, pos.y, TOOLBAR_SIZE)
   const win = new BrowserWindow(
     hardened({
@@ -191,7 +217,7 @@ export function createToolbarWindow(pos: { x: number | null; y: number | null },
       show: false,
       hasShadow: false,
       title: 'Digital Target toolbar'
-    })
+    }, themeArgs(theme))
   )
   win.setAlwaysOnTop(true, 'screen-saver')
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })

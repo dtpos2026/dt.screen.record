@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AppWindow, Camera, Circle, Cpu, FolderOpen, Keyboard, Mic, PanelTop, RefreshCw, RotateCcw, Settings2, Webcam } from 'lucide-react'
+import { AppWindow, Camera, Circle, Cpu, FolderOpen, Keyboard, Mic, Monitor, Moon, MoonStar, PanelTop, RefreshCw, RotateCcw, Settings2, Sun, Webcam } from 'lucide-react'
 import { acceleratorFromEvent, findConflicts, formatAccelerator, isValidAccelerator } from '@shared/accelerator'
 import { DEFAULT_SHORTCUTS, SHORTCUT_ACTIONS, type Settings, type ShortcutAction } from '@shared/settings'
 import { Badge, Button, Card, Field, Notice, Segmented, Select, Slider, Spinner, Toggle } from '../../components/ui'
@@ -75,7 +75,7 @@ function FolderField({ label, value, purpose }: { label: string; value: string; 
 }
 
 function General() {
-  const { settings, update, info } = useApp()
+  const { settings, update, info, theme } = useApp()
   const g = settings.general
   const set = (p: Partial<Settings['general']>) => void update({ general: p })
   return (
@@ -100,8 +100,22 @@ function General() {
       <Card title="Appearance">
         <div className="stack">
           <Field label="Theme">
-            <Segmented value={g.theme} onChange={(v) => set({ theme: v })} options={[{ value: 'dark', label: 'Digital Target Purple' }, { value: 'midnight', label: 'Midnight (higher contrast)' }]} />
+            <Segmented
+              value={g.theme}
+              ariaLabel="Theme"
+              onChange={(v) => set({ theme: v })}
+              options={[
+                { value: 'system', label: <span className="seg-icon"><Monitor size={14} />System</span>, tip: 'Follows the Windows light/dark app mode' },
+                { value: 'light', label: <span className="seg-icon"><Sun size={14} />Light</span> },
+                { value: 'dark', label: <span className="seg-icon"><Moon size={14} />Dark</span> },
+                { value: 'midnight', label: <span className="seg-icon"><MoonStar size={14} />Midnight</span>, tip: 'Darker, higher-contrast dark theme' }
+              ]}
+            />
           </Field>
+          <p className="muted small">
+            {g.theme === 'system' ? `Following Windows — currently ${theme === 'light' ? 'light' : 'dark'}. ` : ''}
+            The theme applies to every window, including the floating toolbar.
+          </p>
           <Toggle checked={g.reduceMotion} onChange={(v) => set({ reduceMotion: v })} label="Reduce motion" description="Turns off interface animations." />
         </div>
       </Card>

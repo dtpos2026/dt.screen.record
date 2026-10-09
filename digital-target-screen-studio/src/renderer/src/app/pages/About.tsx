@@ -55,7 +55,7 @@ export function About() {
                 {(info?.licenses ?? []).map((l) => (
                   <tr key={`${l.name}@${l.version}`}>
                     <td>{l.name}</td>
-                    <td className="tabular muted">{l.version}</td>
+                    <td className="tabular muted">{l.version || (l.name === 'Chromium' ? info?.chrome : l.name === 'Node.js' ? info?.node : '')}</td>
                     <td>{l.license}</td>
                   </tr>
                 ))}

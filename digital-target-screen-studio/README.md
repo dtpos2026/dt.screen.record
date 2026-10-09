@@ -36,7 +36,7 @@ Fully offline. No accounts, no uploads, no telemetry.</p>
   Outputs are kept within H.264 limits (≤ 4096 px wide, ~8.9 MP) and the UI explains when scaling was needed.
 - **MP4 (H.264 + AAC)** by default; optional **WebM (VP9 + Opus)**; optional **constant frame rate** for video editors.
 - Keeps recording when the window is minimised or hidden to the tray; minimise-to-tray while recording.
-- **Floating toolbar** (slim, draggable, always on top, remembers its position, show/hide with Alt+Shift+T): Record, Pause/Resume, Stop, Discard, Screenshot (+ mode menu), Settings, Hide, elapsed time, mic level, and a progress bar for time-limited recordings. It is **excluded from recordings and screenshots** on Windows 10 version 2004+ and Windows 11.
+- **Floating toolbar** (slim, draggable, always on top, remembers its position, show/hide with Alt+Shift+T): Record, Pause/Resume, Stop, Discard; one-click **Region / Full-screen / Window screenshots** plus a menu with All displays, the screenshot countdown (none / 3 / 5 / 10 s, shown on the toolbar when set), copy-to-clipboard, the Screenshot Tool and the screenshots folder; Library, Settings, Hide; elapsed time, mic level, and a progress bar for time-limited recordings. It is **excluded from recordings and screenshots** on Windows 10 version 2004+ and Windows 11.
 - Thin frame around region recordings (drawn outside the recorded area, excluded from capture).
 - **Tray icon** with live status and full controls; **global shortcuts** (configurable, conflict detection).
 - Confirmation before **discarding** a recording or quitting during one.
@@ -73,19 +73,23 @@ Fully offline. No accounts, no uploads, no telemetry.</p>
 
 ### Application
 - Pages: **Dashboard, Screen Recorder, Screenshot Tool, Media Library, Settings, About Digital Target**; branded **splash screen**, app icon, installer.
-- Premium dark-purple Digital Target theme (plus a higher-contrast *Midnight* theme), Inter typeface (bundled, works offline), reduce-motion option, keyboard navigation (Ctrl+1…6), tooltips, empty/loading/success/error states.
+- **Light and Dark themes** in Digital Target purple, plus *System* (follows the Windows light/dark app mode, live) and a higher-contrast *Midnight* dark theme. Switch from the sidebar (Light / Dark / System) or Settings → General → Appearance; the main window, its title bar buttons and the floating toolbar all follow the choice (the on-screen countdown, region selector and webcam bubble keep their dark style in every theme, as they are drawn over your screen content). Inter typeface (bundled, works offline), reduce-motion option, keyboard navigation (Ctrl+1…6), tooltips, empty/loading/success/error states.
 - Settings are persisted locally (`%APPDATA%\Digital Target Screen Studio\settings.json`) and repaired automatically if the file is damaged.
 - Optional start with Windows (starts quietly in the tray), notifications, minimise/close to tray.
 
-| Recorder (recording) | Screenshot editor |
+| Light theme | Dark theme |
 |---|---|
+| ![Light theme](docs/screenshots/light-dashboard.png) | ![Dark theme](docs/screenshots/dashboard.png) |
+| **Recorder (recording)** | **Screenshot editor** |
 | ![Recording](docs/screenshots/recording.png) | ![Editor](docs/screenshots/editor.png) |
 | **Media library** | **Region selection** |
 | ![Library](docs/screenshots/library.png) | ![Region](docs/screenshots/region-select.png) |
 
-Floating toolbar while recording:
+Floating toolbar — ready (light theme) and while recording (dark theme):
 
-![Toolbar](docs/screenshots/toolbar.png)
+![Toolbar, light theme](docs/screenshots/toolbar-light.png)
+
+![Toolbar while recording](docs/screenshots/toolbar.png)
 
 ## Installing (end users)
 
@@ -185,11 +189,11 @@ H.264 video is **copied** into MP4 without re-encoding, so saving is near-instan
 ## Testing
 
 ```bash
-npm test                 # 40 unit tests (Vitest)
-npm run build && npm run test:e2e   # 22 end-to-end tests (Playwright driving the real app)
+npm test                 # 41 unit tests (Vitest)
+npm run build && npm run test:e2e   # 24 end-to-end tests (Playwright driving the real app)
 ```
 
-The end-to-end suite records real video and audio and inspects the results with `ffprobe`: full-screen recording with microphone and pause/resume (pause excluded from the file), duration limit auto-stop, WebM, region recording via the overlay, window recording and screenshots, PNG/JPEG/WebP screenshots at native resolution, clipboard, region screenshot, the editor (annotate, crop, save copy), **multi-monitor** (per-display and combined captures), **system-audio loopback** (a test tone must be in the file, and the device volume must be untouched), floating toolbar, global shortcut, webcam overlay, library (rename, export/compress, delete), **crash recovery** (the app is killed mid-recording and the recording is recovered), countdown and cancel, discard, screenshot delay, invalid save folder and a missing microphone.
+The end-to-end suite records real video and audio and inspects the results with `ffprobe`: full-screen recording with microphone and pause/resume (pause excluded from the file), duration limit auto-stop, WebM, region recording via the overlay, window recording and screenshots, PNG/JPEG/WebP screenshots at native resolution, clipboard, region screenshot, the editor (annotate, crop, save copy), **multi-monitor** (per-display and combined captures), **system-audio loopback** (a test tone must be in the file, and the device volume must be untouched), floating toolbar (recording controls, one-click screenshots, theme), light/dark/system themes (including text contrast checks), global shortcut, webcam overlay, library (rename, export/compress, delete), **crash recovery** (the app is killed mid-recording and the recording is recovered), countdown and cancel, discard, screenshot delay, invalid save folder and a missing microphone.
 
 On Linux the suite runs on a virtual desktop with two monitors, a window manager and a virtual audio device:
 

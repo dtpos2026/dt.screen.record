@@ -4,8 +4,8 @@
 
 | Suite | Command | What it proves |
 |---|---|---|
-| Unit (40 tests) | `npm test` | Settings validation/repair, resolution & bitrate math (no upscaling, encoder limits, DPI, multi-monitor layout), filenames, shortcut parsing, FFmpeg argument building and output parsing, image header parsing |
-| End-to-end (22 tests) | `npm run build && npm run test:e2e` | Drives the real app and inspects real output files with ffprobe (see README → Testing) |
+| Unit (41 tests) | `npm test` | Settings validation/repair, resolution & bitrate math (no upscaling, encoder limits, DPI, multi-monitor layout), filenames, shortcut parsing, FFmpeg argument building and output parsing, image header parsing |
+| End-to-end (24 tests) | `npm run build && npm run test:e2e` | Drives the real app and inspects real output files with ffprobe (see README → Testing) |
 | CI | `.github/workflows/screen-studio.yml` | Windows: unit + E2E on the Windows desktop, NSIS/portable packaging, silent install → launch → uninstall. Linux: E2E on a virtual two-monitor desktop with virtual audio |
 
 On Windows the E2E suite uses Chromium's fake camera/microphone (`DT_E2E=1`), so it runs on machines without audio hardware. Tests that rely on Linux helpers are skipped on Windows (window capture via `xclock`, global shortcut via `xdotool`, system-audio loopback via PulseAudio); the matching Windows behaviour is covered by the manual checklist below.
@@ -43,6 +43,12 @@ Run on at least one Windows 10 (22H2) and one Windows 11 PC, ideally with: a 4K 
 - [ ] PNG/JPEG/WebP saved and open in Photos; clipboard paste into Paint/Word/Teams.
 - [ ] Delay 3/5/10 s with countdown; capture a menu that only opens on hover.
 - [ ] Editor: all tools, undo/redo, crop, resize, Save copy, Save As, Overwrite (asks first).
+
+- [ ] Floating toolbar: Region / Full-screen / Window buttons each take the right capture; the caret menu's countdown choice shows on the toolbar (e.g. "3s") and delays the capture; "Open screenshots folder" opens Explorer.
+
+### Themes
+- [ ] Light, Dark and Midnight: every page, dialogs and toasts are readable; the window's minimise/maximise/close buttons match the theme.
+- [ ] System: switch Windows Settings → Personalisation → Colours → app mode between Light and Dark while the app is open — the app and the toolbar follow immediately.
 
 ### Library & export
 - [ ] Thumbnails, durations, resolutions; play/seek/volume in the built-in player.
