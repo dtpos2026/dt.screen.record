@@ -39,7 +39,17 @@ export async function launch(opts: { userData?: string; outDir?: string; env?: R
   const userData = opts.userData ?? mkdtempSync(join(tmpdir(), 'dt-e2e-ud-'))
   const outDir = opts.outDir ?? mkdtempSync(join(tmpdir(), 'dt-e2e-out-'))
   const args = process.platform === 'linux' ? ['--no-sandbox', ROOT] : [ROOT]
-  const app = await electron.launch({ args, cwd: ROOT, env: { ...process.env, DT_USER_DATA: userData, DT_E2E: '1', ...opts.env } as Record<string, string> })
+  const env = { ...process.env, DT_USER_DATA: userData, DT_E2E: '1', ...opts.env } as Record<string, string>
+  // A relaunch right after a crash can briefly find the old instance's lock; retry.
+  let app: ElectronApplication | null = null
+  for (let attempt = 1; !app; attempt++) {
+    try {
+      app = await electron.launch({ args, cwd: ROOT, env })
+    } catch (err) {
+      if (attempt >= 4) throw err
+      await new Promise((r) => setTimeout(r, 2000))
+    }
+  }
   const page = await mainWindow(app)
   if (opts.keepSettings) return { app, page, userData, outDir }
   await setSettings(page, {

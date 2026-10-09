@@ -2,7 +2,7 @@ import { app, nativeImage, shell } from 'electron'
 import { createHash, randomUUID } from 'node:crypto'
 import { existsSync, watch, type FSWatcher } from 'node:fs'
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
-import { basename, dirname, extname, join } from 'node:path'
+import { basename, dirname, extname, join, resolve } from 'node:path'
 import type { ChildProcess } from 'node:child_process'
 import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '../../shared/constants'
 import { appError, toAppError } from '../../shared/errors'
@@ -31,6 +31,11 @@ interface CacheEntry {
 const isVideo = (ext: string) => (VIDEO_EXTENSIONS as readonly string[]).includes(ext)
 const isImage = (ext: string) => (IMAGE_EXTENSIONS as readonly string[]).includes(ext)
 
+/** Path equality that ignores case on Windows (NTFS is case-insensitive). */
+function samePath(a: string, b: string): boolean {
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b
+}
+
 export function thumbnailsDir(): string {
   return join(app.getPath('userData'), 'thumbnails')
 }
@@ -45,13 +50,16 @@ class LibraryService {
 
   roots(): Array<{ dir: string; folder: MediaItem['folder'] }> {
     const g = settingsStore.get().general
-    const list: Array<{ dir: string; folder: MediaItem['folder'] }> = [{ dir: g.recordingsDir, folder: 'recordings' }]
-    if (g.screenshotsDir !== g.recordingsDir) list.push({ dir: g.screenshotsDir, folder: 'screenshots' })
+    const rec = resolve(g.recordingsDir)
+    const shots = resolve(g.screenshotsDir)
+    const list: Array<{ dir: string; folder: MediaItem['folder'] }> = [{ dir: rec, folder: 'recordings' }]
+    if (samePath(shots, rec) === false) list.push({ dir: shots, folder: 'screenshots' })
     return list
   }
 
   isLibraryFile(p: string): boolean {
-    return this.roots().some((r) => dirname(p) === r.dir) && isAllowedMediaPath(p)
+    const dir = resolve(dirname(p))
+    return this.roots().some((r) => samePath(dir, r.dir)) && isAllowedMediaPath(p)
   }
 
   /** Watches the output folders so the library updates when files change. */

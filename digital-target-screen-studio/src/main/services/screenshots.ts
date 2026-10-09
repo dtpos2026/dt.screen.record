@@ -136,7 +136,8 @@ class ScreenshotService {
     } finally {
       this.busy = false
       if (hideToolbar && toolbar && !toolbar.isDestroyed()) toolbar.showInactive()
-      if (hideMain && main && !main.isDestroyed() && !settings.screenshot.showPreview) main.show()
+      // Bring the window back unless the preview already did (e.g. after a cancelled selection).
+      if (hideMain && main && !main.isDestroyed() && !main.isVisible()) main.show()
     }
   }
 

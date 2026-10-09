@@ -31,6 +31,8 @@ if (process.env.DT_E2E === '1' && process.env.DT_E2E_REAL_AUDIO !== '1') {
 registerSchemes()
 
 if (!app.requestSingleInstanceLock()) {
+  // Another instance owns this profile; it is asked to show its window instead.
+  console.warn('Digital Target Screen Studio is already running')
   app.quit()
 } else {
   app.on('second-instance', () => showMainWindow())
@@ -126,13 +128,17 @@ function wireMainWindow(main: BrowserWindow): void {
   main.on('close', (event) => {
     if (quitting) return
     const s = settingsStore.get().general
-    if (s.closeToTray) {
+    if (!s.closeToTray) {
+      // Hidden helper windows (engine, toolbar) would keep the app alive, so quit explicitly.
       event.preventDefault()
-      main.hide()
-      if (!trayHintShown) {
-        trayHintShown = true
-        notify({ kind: 'info', title: 'Still running in the tray', message: 'Digital Target Screen Studio keeps running so your shortcuts keep working. Right-click the tray icon to quit.' })
-      }
+      app.quit()
+      return
+    }
+    event.preventDefault()
+    main.hide()
+    if (!trayHintShown) {
+      trayHintShown = true
+      notify({ kind: 'info', title: 'Still running in the tray', message: 'Digital Target Screen Studio keeps running so your shortcuts keep working. Right-click the tray icon to quit.' })
     }
   })
   main.on('minimize', () => {

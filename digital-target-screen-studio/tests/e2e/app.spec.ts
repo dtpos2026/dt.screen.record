@@ -362,8 +362,12 @@ test('interrupted recording is recovered after a crash', async () => {
   expect(r.ok).toBe(true)
   await waitForStatus(A.page, 'recording')
   await A.page.waitForTimeout(3500)
-  A.app.process().kill('SIGKILL')
-  await new Promise((res) => setTimeout(res, 1000))
+  const proc = A.app.process()
+  const exited = new Promise((res) => proc.once('exit', res))
+  proc.kill('SIGKILL')
+  await exited
+  // Let the killed instance's helper processes shut down (Windows keeps them a moment).
+  await new Promise((res) => setTimeout(res, process.platform === 'win32' ? 4000 : 1000))
   const B = await launch({ userData: A.userData, outDir: A.outDir })
   try {
     const list = await B.page.evaluate(() => window.dt.invoke('recording:recoverable'))
