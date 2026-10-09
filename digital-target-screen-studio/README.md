@@ -110,6 +110,8 @@ npm run build          # production build of main, preload and renderer into out
 npm run dist:win       # => release/<version>/ Setup (NSIS) + Portable .exe for Windows x64
 ```
 
+In development the app uses `resources/ffmpeg/<platform>-<arch>/` if present, otherwise any `ffmpeg`/`ffprobe` on the `PATH`; on Windows run `npm run ffmpeg:fetch` once so `npm run dev` uses the same FFmpeg build as the installer.
+
 `npm run dist:win` runs: typecheck → build → `ffmpeg:fetch` (downloads the LGPL FFmpeg 8.1 build for Windows into `resources/ffmpeg/win32-x64`) → `licenses` (third-party notices) → `electron-builder --win --x64`.
 
 Other scripts:

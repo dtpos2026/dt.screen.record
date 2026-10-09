@@ -372,7 +372,10 @@ test('interrupted recording is recovered after a crash', async () => {
   await A.page.waitForTimeout(3500)
   const proc = A.app.process()
   const exited = new Promise((res) => proc.once('exit', res))
-  proc.kill('SIGKILL')
+  // Simulate the whole app dying. On Windows, end the full process tree like
+  // Task Manager does; killing only the main process leaves helpers holding the profile.
+  if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(proc.pid), '/T', '/F'])
+  else proc.kill('SIGKILL')
   await exited
   // Let the killed instance's helper processes shut down (Windows keeps them a moment).
   await new Promise((res) => setTimeout(res, process.platform === 'win32' ? 4000 : 1000))
