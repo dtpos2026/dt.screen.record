@@ -166,6 +166,15 @@ function applyLoginItem(s: Settings): void {
 
 function configureSession(): void {
   const ses = session.defaultSession
+  // Fully offline: no spell-check dictionary downloads and no remote requests
+  // of any kind (only the Vite dev server is allowed during development).
+  ses.setSpellCheckerEnabled(false)
+  ses.setSpellCheckerLanguages([])
+  ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] }, (details, callback) => {
+    const allowed = !app.isPackaged && isTrustedUrl(details.url.replace(/^ws/, 'http'))
+    if (!allowed) createLogger('network').warn('Blocked network request')
+    callback({ cancel: !allowed })
+  })
   const allowed = new Set(['media', 'display-capture', 'clipboard-sanitized-write', 'fullscreen'])
   ses.setPermissionRequestHandler((wc, permission, callback, details) => {
     callback(allowed.has(permission) && isTrustedUrl(details.requestingUrl) && !!roleOf(wc))

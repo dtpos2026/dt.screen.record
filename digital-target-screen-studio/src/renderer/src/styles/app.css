@@ -1430,7 +1430,8 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
-  min-height: 50px;
+  /* Fixed height so the canvas never jumps when tool options change. */
+  height: 54px;
   padding: 6px;
   border-radius: 12px;
   background: var(--surface);
@@ -1438,6 +1439,9 @@
 }
 .editor-bar > * {
   flex-shrink: 0;
+}
+.editor-bar::-webkit-scrollbar {
+  height: 4px;
 }
 .editor-bar .sep {
   width: 1px;
